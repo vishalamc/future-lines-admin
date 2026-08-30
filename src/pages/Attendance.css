@@ -1,0 +1,451 @@
+.attendance-page {
+    min-height: 100vh;
+    background: #f5f7fb;
+}
+
+
+/* HEADER */
+
+.attendance-header {
+    background: white;
+    padding: 22px 32px;
+    border-bottom: 1px solid #e5e7eb;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.attendance-header h1 {
+    margin: 0;
+    font-size: 25px;
+    color: #1f2937;
+}
+
+
+.attendance-header p {
+    margin: 5px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+.back-button {
+    border: none;
+    background: #eef2ff;
+    color: #4f46e5;
+    padding: 10px 15px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+
+/* CONTENT */
+
+.attendance-content {
+    padding: 28px 32px;
+    max-width: 1500px;
+    margin: auto;
+}
+
+
+/* CONTROLS */
+
+.attendance-control-card {
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+
+    display: grid;
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 17px;
+
+    box-shadow:
+        0 3px 15px rgba(0,0,0,0.05);
+
+    margin-bottom: 20px;
+}
+
+
+.control-group label {
+    display: block;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 7px;
+}
+
+
+.control-group input,
+.control-group select {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 11px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+
+    background: white;
+
+    color: #374151;
+
+    outline: none;
+}
+
+
+.control-group input:focus,
+.control-group select:focus {
+    border-color: #6366f1;
+}
+
+
+/* MESSAGES */
+
+.success-message {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+}
+
+
+.attendance-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+}
+
+
+/* SUMMARY */
+
+.attendance-summary {
+    display: grid;
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 18px;
+
+    margin-bottom: 20px;
+}
+
+
+.attendance-summary > div {
+    background: white;
+    border-radius: 10px;
+    padding: 18px 20px;
+
+    box-shadow:
+        0 3px 15px rgba(0,0,0,0.05);
+}
+
+
+.attendance-summary span {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+
+.attendance-summary strong {
+    display: block;
+    color: #1f2937;
+    font-size: 24px;
+    margin-top: 5px;
+}
+
+
+.present-number {
+    color: #059669 !important;
+}
+
+
+.absent-number {
+    color: #dc2626 !important;
+}
+
+
+/* TABLE CARD */
+
+.attendance-card {
+    background: white;
+    border-radius: 12px;
+
+    box-shadow:
+        0 3px 15px rgba(0,0,0,0.05);
+
+    overflow: hidden;
+}
+
+
+.attendance-card-header {
+    padding: 22px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+
+.attendance-card-header h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 19px;
+}
+
+
+.attendance-card-header p {
+    margin: 5px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+
+.quick-actions {
+    display: flex;
+    gap: 8px;
+}
+
+
+.quick-actions button {
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #374151;
+
+    padding: 9px 12px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-size: 12px;
+}
+
+
+.quick-actions button:hover {
+    background: #f9fafb;
+}
+
+
+/* TABLE */
+
+.attendance-table-wrapper {
+    overflow-x: auto;
+}
+
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+
+.attendance-table th {
+    background: #f8fafc;
+    color: #6b7280;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    text-align: left;
+
+    padding: 14px 18px;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+
+.attendance-table td {
+    padding: 15px 18px;
+
+    border-bottom: 1px solid #f1f5f9;
+
+    color: #374151;
+
+    font-size: 13px;
+}
+
+
+.attendance-table tbody tr:hover {
+    background: #fafafa;
+}
+
+
+/* ATTENDANCE BUTTONS */
+
+.attendance-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+
+.attendance-buttons button {
+    padding: 8px 12px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    background: white;
+}
+
+
+.attendance-buttons .present {
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+
+
+.attendance-buttons .present.active {
+    background: #d1fae5;
+}
+
+
+.attendance-buttons .absent {
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+
+.attendance-buttons .absent.active {
+    background: #fee2e2;
+}
+
+
+/* SAVE */
+
+.save-attendance {
+    padding: 20px;
+
+    display: flex;
+    justify-content: flex-end;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+
+.save-attendance button {
+    border: none;
+
+    background: #4f46e5;
+    color: white;
+
+    padding: 12px 25px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+}
+
+
+.save-attendance button:hover {
+    background: #4338ca;
+}
+
+
+.save-attendance button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* LOADING */
+
+.attendance-loading {
+    text-align: center;
+    padding: 50px;
+    color: #6b7280;
+}
+
+
+/* NO STUDENTS */
+
+.no-students {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+
+.no-students div {
+    font-size: 40px;
+}
+
+
+.no-students h3 {
+    color: #374151;
+}
+
+
+.no-students p {
+    color: #6b7280;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 1000px) {
+
+    .attendance-control-card {
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .attendance-header {
+        padding: 18px;
+    }
+
+
+    .attendance-content {
+        padding: 18px;
+    }
+
+
+    .attendance-control-card {
+        grid-template-columns: 1fr;
+    }
+
+
+    .attendance-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    .attendance-card-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+
+    .quick-actions {
+        width: 100%;
+    }
+
+
+    .quick-actions button {
+        flex: 1;
+    }
+
+}

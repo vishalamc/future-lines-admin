@@ -1,0 +1,324 @@
+.add-student-page {
+    min-height: 100vh;
+    padding: 30px;
+    background: #f5f7fb;
+}
+
+
+/* HEADER */
+
+.add-student-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.add-student-header h1 {
+    margin: 0;
+    font-size: 30px;
+    color: #1f2937;
+}
+
+.add-student-header p {
+    margin-top: 7px;
+    color: #6b7280;
+}
+
+
+.back-button {
+    border: none;
+    background: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #374151;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+
+/* FORM */
+
+.student-form {
+    max-width: 1100px;
+    margin: auto;
+}
+
+
+.form-section {
+    background: white;
+    border-radius: 14px;
+    padding: 28px;
+    margin-bottom: 22px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+}
+
+
+.section-title {
+    margin-bottom: 25px;
+}
+
+.section-title h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 20px;
+}
+
+.section-title p {
+    color: #6b7280;
+    margin-top: 5px;
+}
+
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.form-field label {
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 12px 13px;
+    font-size: 14px;
+    outline: none;
+    background: white;
+    transition: 0.2s;
+}
+
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+
+/* LOGIN INFORMATION */
+
+.login-information {
+    background: #f8f9ff;
+}
+
+
+.default-login-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+
+.login-info-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+
+.login-info-item span {
+    display: block;
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 7px;
+}
+
+
+.login-info-item strong {
+    color: #374151;
+}
+
+
+/* ACTIONS */
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+
+
+.cancel-button,
+.create-student-button {
+    padding: 13px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+
+.cancel-button {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+
+.create-student-button {
+    background: #4f46e5;
+    color: white;
+}
+
+
+.create-student-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* SUCCESS */
+
+.student-success {
+    max-width: 1100px;
+    margin: 0 auto 25px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 14px;
+    padding: 22px;
+    display: flex;
+    gap: 18px;
+}
+
+
+.success-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #10b981;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+
+.success-content h2 {
+    margin: 0;
+    color: #065f46;
+}
+
+
+.success-content p {
+    color: #047857;
+}
+
+
+.credentials-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 18px;
+}
+
+
+.credentials-box div {
+    background: white;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+
+.credentials-box span {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 5px;
+}
+
+
+.credentials-box strong {
+    color: #111827;
+}
+
+
+.password-warning {
+    margin-top: 15px;
+    color: #92400e;
+    font-size: 14px;
+}
+
+
+/* ERROR */
+
+.student-error {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+    .add-student-page {
+        padding: 15px;
+    }
+
+
+    .add-student-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .default-login-box {
+        grid-template-columns: 1fr;
+    }
+
+
+    .credentials-box {
+        grid-template-columns: 1fr;
+    }
+
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+
+    .cancel-button,
+    .create-student-button {
+        width: 100%;
+    }
+
+}

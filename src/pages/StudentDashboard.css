@@ -1,0 +1,985 @@
+.student-dashboard {
+    min-height: 100vh;
+    display: flex;
+    background: #f5f7fb;
+}
+
+
+/* ==================================================
+   SIDEBAR
+================================================== */
+
+.student-sidebar {
+    width: 250px;
+    min-height: 100vh;
+    background: #111827;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+}
+
+
+.student-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+
+.student-sidebar-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    font-weight: 800;
+    font-size: 17px;
+}
+
+
+.student-sidebar-brand h2 {
+    margin: 0;
+    font-size: 17px;
+}
+
+
+.student-sidebar-brand span {
+    display: block;
+    margin-top: 3px;
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+
+/* ==================================================
+   NAVIGATION
+================================================== */
+
+.student-nav {
+    padding: 20px 12px;
+    flex: 1;
+}
+
+
+.student-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #9ca3af;
+    padding: 13px 14px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+
+.student-nav-link:hover {
+    background: rgba(255,255,255,0.06);
+    color: white;
+}
+
+
+.student-nav-link.active {
+    background: #4f46e5;
+    color: white;
+}
+
+
+.nav-icon {
+    width: 23px;
+    text-align: center;
+    font-size: 17px;
+}
+
+
+/* ==================================================
+   LOGOUT
+================================================== */
+
+.student-logout {
+    margin: 15px;
+    padding: 13px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    color: #d1d5db;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+
+.student-logout:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+
+/* ==================================================
+   MAIN
+================================================== */
+
+.student-main {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    min-height: 100vh;
+}
+
+
+/* ==================================================
+   HEADER
+================================================== */
+
+.student-header {
+    min-height: 80px;
+    padding: 20px 32px;
+    box-sizing: border-box;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.student-header h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 25px;
+}
+
+
+.student-header p {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+.student-header-profile {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+
+.student-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+
+.student-header-profile strong {
+    display: block;
+    color: #374151;
+    font-size: 14px;
+}
+
+
+.student-header-profile span {
+    display: block;
+    margin-top: 3px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+
+/* ==================================================
+   CONTENT
+================================================== */
+
+.student-content {
+    padding: 30px 32px 50px;
+    max-width: 1400px;
+    margin: auto;
+}
+
+
+/* ==================================================
+   PROFILE HERO
+================================================== */
+
+.student-profile-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    margin-bottom: 22px;
+}
+
+
+.profile-main {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+
+.large-student-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+
+.profile-main-info h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 23px;
+}
+
+
+.profile-main-info p {
+    margin: 6px 0 10px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+.course-badge {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4f46e5;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.profile-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 8px 13px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+
+/* ==================================================
+   STATISTICS
+================================================== */
+
+.student-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+
+.student-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+}
+
+
+.student-stat-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 10px;
+    background: #eef2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+}
+
+
+.student-stat-card span {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+
+.student-stat-card h3 {
+    margin: 5px 0 0;
+    color: #1f2937;
+    font-size: 19px;
+}
+
+
+/* ==================================================
+   SECTIONS
+================================================== */
+
+.student-section {
+    background: white;
+    border-radius: 14px;
+    padding: 25px;
+    margin-bottom: 24px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+}
+
+
+.student-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+}
+
+
+.student-section-header h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 20px;
+}
+
+
+.student-section-header p {
+    margin: 5px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+
+/* ==================================================
+   PROFILE GRID
+================================================== */
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+
+.profile-item {
+    background: #f8fafc;
+    border: 1px solid #edf0f4;
+    padding: 15px;
+    border-radius: 9px;
+}
+
+
+.profile-item span {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+    margin-bottom: 7px;
+}
+
+
+.profile-item strong {
+    display: block;
+    color: #374151;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+
+.profile-full {
+    grid-column: 1 / -1;
+}
+
+
+/* ==================================================
+   EMPTY DATA
+================================================== */
+
+.empty-student-data {
+    text-align: center;
+    padding: 40px 20px;
+    border: 1px dashed #d1d5db;
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+
+.empty-data-icon {
+    font-size: 35px;
+    margin-bottom: 10px;
+}
+
+
+.empty-student-data h3 {
+    margin: 0;
+    color: #374151;
+}
+
+
+.empty-student-data p {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+
+/* ==================================================
+   ATTENDANCE
+================================================== */
+
+.attendance-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+
+.attendance-circle {
+    width: 145px;
+    height: 145px;
+    border-radius: 50%;
+    border: 12px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.attendance-circle span {
+    font-size: 28px;
+    font-weight: 700;
+    color: #374151;
+}
+
+
+.attendance-circle small {
+    color: #6b7280;
+    margin-top: 3px;
+}
+
+
+.attendance-info {
+    display: flex;
+    gap: 55px;
+}
+
+
+.attendance-info span {
+    display: block;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+
+.attendance-info strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 22px;
+    color: #1f2937;
+}
+
+
+/* ==================================================
+   PASSWORD
+================================================== */
+
+.password-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #f8fafc;
+    border: 1px solid #edf0f4;
+    border-radius: 10px;
+    padding: 18px;
+}
+
+
+.password-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: #eef2ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 21px;
+}
+
+
+.password-card > div:nth-child(2) {
+    flex: 1;
+}
+
+
+.password-card h3 {
+    margin: 0;
+    color: #374151;
+}
+
+
+.password-card p {
+    margin: 5px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+
+.password-card button {
+    border: none;
+    background: #4f46e5;
+    color: white;
+    padding: 11px 17px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+
+.password-card button:hover {
+    background: #4338ca;
+}
+
+
+/* ==================================================
+   LOADING
+================================================== */
+
+.student-loading {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f5f7fb;
+}
+
+
+.student-loader {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: studentSpin 0.8s linear infinite;
+}
+
+
+.student-loading p {
+    color: #6b7280;
+    margin-top: 15px;
+}
+
+
+@keyframes studentSpin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* ==================================================
+   ERROR PAGE
+================================================== */
+
+.student-error-page {
+    min-height: 100vh;
+    background: #f5f7fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.student-error-box {
+    width: min(450px, 90%);
+    background: white;
+    padding: 35px;
+    border-radius: 14px;
+    text-align: center;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+}
+
+
+.student-error-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    font-weight: 700;
+    font-size: 22px;
+}
+
+
+.student-error-box h2 {
+    color: #374151;
+}
+
+
+.student-error-box p {
+    color: #6b7280;
+}
+
+
+.student-error-box button {
+    border: none;
+    background: #4f46e5;
+    color: white;
+    padding: 11px 20px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+
+/* ==================================================
+   RESPONSIVE
+================================================== */
+
+@media (max-width: 1100px) {
+
+    .student-stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .profile-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 768px) {
+
+    .student-sidebar {
+        width: 70px;
+    }
+
+
+    .student-sidebar-brand {
+        justify-content: center;
+        padding: 18px 8px;
+    }
+
+
+    .student-sidebar-brand > div:last-child {
+        display: none;
+    }
+
+
+    .student-nav-link {
+        justify-content: center;
+        padding: 13px 5px;
+    }
+
+
+    .student-nav-link {
+        font-size: 0;
+    }
+
+
+    .nav-icon {
+        font-size: 18px;
+    }
+
+
+    .student-logout {
+        font-size: 0;
+    }
+
+
+    .student-logout span {
+        font-size: 18px;
+    }
+
+
+    .student-main {
+        margin-left: 70px;
+        width: calc(100% - 70px);
+    }
+
+
+    .student-header {
+        padding: 17px;
+    }
+
+
+    .student-header h1 {
+        font-size: 19px;
+    }
+
+
+    .student-header-profile > div:last-child {
+        display: none;
+    }
+
+
+    .student-content {
+        padding: 18px;
+    }
+
+
+    .student-profile-card {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+
+    .student-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .profile-full {
+        grid-column: auto;
+    }
+
+
+    .attendance-placeholder {
+        flex-direction: column;
+        gap: 25px;
+    }
+
+
+    .attendance-info {
+        width: 100%;
+        justify-content: space-around;
+        gap: 10px;
+    }
+
+
+    .password-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+
+    .password-card button {
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .student-header {
+        align-items: flex-start;
+    }
+
+
+    .student-header-profile {
+        display: none;
+    }
+
+
+    .profile-main {
+        align-items: flex-start;
+    }
+
+
+    .large-student-avatar {
+        width: 55px;
+        height: 55px;
+        min-width: 55px;
+        font-size: 21px;
+    }
+
+
+    .profile-main-info h2 {
+        font-size: 19px;
+    }
+
+
+    .student-section {
+        padding: 18px;
+    }
+    /* ==================================================
+   STUDENT ATTENDANCE
+================================================== */
+
+.attendance-error-message {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.attendance-error-message button {
+    border: none;
+    background: #dc2626;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.attendance-loading-box {
+    padding: 50px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.attendance-loading-box .student-loader {
+    margin: 0 auto 15px;
+}
+
+
+/* Attendance numbers */
+
+.attendance-present {
+    color: #16a34a !important;
+}
+
+.attendance-absent {
+    color: #dc2626 !important;
+}
+
+
+/* History */
+
+.attendance-history {
+    margin-top: 25px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.attendance-history-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.attendance-history-header h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 18px;
+}
+
+.attendance-history-header p {
+    margin: 5px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+
+/* Table */
+
+.student-attendance-table-wrapper {
+    overflow-x: auto;
+}
+
+.student-attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+.student-attendance-table th {
+    background: #f8fafc;
+    color: #475569;
+    text-align: left;
+    padding: 13px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.student-attendance-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #374151;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.student-attendance-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* Status */
+
+.student-present-badge,
+.student-absent-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.student-present-badge {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.student-absent-badge {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/* Responsive */
+
+@media (max-width: 700px) {
+
+    .attendance-placeholder {
+        flex-direction: column;
+    }
+
+    .attendance-error-message {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+}
+
+}
