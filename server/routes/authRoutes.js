@@ -17,14 +17,22 @@ router.post("/login", async (req, res) => {
 
         const { email, password } = req.body;
 
+
         if (!email || !password) {
 
             return res.status(400).json({
                 success: false,
-                message: "Email and password are required.",
+                message:
+                    "Email and password are required.",
             });
 
         }
+
+
+        console.log(
+            "LOGIN REQUEST:",
+            email
+        );
 
 
         const result = await pool.query(
@@ -43,11 +51,18 @@ router.post("/login", async (req, res) => {
         );
 
 
+        console.log(
+            "USER FOUND:",
+            result.rows.length
+        );
+
+
         if (result.rows.length === 0) {
 
             return res.status(401).json({
                 success: false,
-                message: "Invalid email or password.",
+                message:
+                    "Invalid email or password.",
             });
 
         }
@@ -56,24 +71,26 @@ router.post("/login", async (req, res) => {
         const user = result.rows[0];
 
 
-        const passwordMatch = await bcrypt.compare(
-            password,
-            user.password
-        );
+        const passwordMatch =
+            await bcrypt.compare(
+                password,
+                user.password
+            );
 
 
         if (!passwordMatch) {
 
             return res.status(401).json({
                 success: false,
-                message: "Invalid email or password.",
+                message:
+                    "Invalid email or password.",
             });
 
         }
 
 
         // =================================================
-        // SAVE USER IN SESSION
+        // CREATE SESSION
         // =================================================
 
         req.session.user = {
@@ -92,26 +109,67 @@ router.post("/login", async (req, res) => {
         };
 
 
-        res.json({
+        // =================================================
+        // IMPORTANT:
+        // WAIT UNTIL SESSION IS SAVED
+        // =================================================
 
-            success: true,
+        req.session.save((error) => {
 
-            message: "Login successful.",
+            if (error) {
 
-            user: req.session.user,
+                console.error(
+                    "SESSION SAVE ERROR:",
+                    error
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Failed to create login session.",
+
+                });
+
+            }
+
+
+            console.log(
+                "SESSION SAVED:",
+                req.session.user
+            );
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Login successful.",
+
+                user:
+                    req.session.user,
+
+            });
 
         });
 
 
     } catch (error) {
 
-        console.error("Login error:", error);
+        console.error(
+            "LOGIN ERROR:",
+            error
+        );
 
-        res.status(500).json({
+
+        return res.status(500).json({
 
             success: false,
 
-            message: "Server error during login.",
+            message:
+                "Server error during login.",
 
         });
 
@@ -126,24 +184,46 @@ router.post("/login", async (req, res) => {
 
 router.get("/me", (req, res) => {
 
-    if (!req.session || !req.session.user) {
+    console.log(
+        "ME REQUEST"
+    );
+
+
+    console.log(
+        "SESSION ID:",
+        req.sessionID
+    );
+
+
+    console.log(
+        "SESSION USER:",
+        req.session?.user
+    );
+
+
+    if (
+        !req.session ||
+        !req.session.user
+    ) {
 
         return res.status(401).json({
 
             success: false,
 
-            message: "Not authenticated.",
+            message:
+                "Not authenticated.",
 
         });
 
     }
 
 
-    res.json({
+    return res.json({
 
         success: true,
 
-        user: req.session.user,
+        user:
+            req.session.user,
 
     });
 
@@ -160,27 +240,45 @@ router.post("/logout", (req, res) => {
 
         if (error) {
 
-            console.error("Logout error:", error);
+            console.error(
+                "LOGOUT ERROR:",
+                error
+            );
 
             return res.status(500).json({
 
                 success: false,
 
-                message: "Logout failed.",
+                message:
+                    "Logout failed.",
 
             });
 
         }
 
 
-        res.clearCookie("connect.sid");
+        res.clearCookie(
+            "connect.sid",
+            {
+                httpOnly: true,
+                secure:
+                    process.env.NODE_ENV ===
+                    "production",
+                sameSite:
+                    process.env.NODE_ENV ===
+                    "production"
+                        ? "none"
+                        : "lax",
+            }
+        );
 
 
-        res.json({
+        return res.json({
 
             success: true,
 
-            message: "Logout successful.",
+            message:
+                "Logout successful.",
 
         });
 
@@ -191,169 +289,214 @@ router.post("/logout", (req, res) => {
 
 // =====================================================
 // CHANGE PASSWORD
-// STUDENT + ADMIN
+// ADMIN + STUDENT
 // =====================================================
 
-router.post("/change-password", async (req, res) => {
+router.post(
+    "/change-password",
+    async (req, res) => {
 
-    try {
+        try {
 
-        if (!req.session || !req.session.user) {
+            if (
+                !req.session ||
+                !req.session.user
+            ) {
 
-            return res.status(401).json({
+                return res.status(401).json({
 
-                success: false,
+                    success: false,
 
-                message: "Authentication required.",
+                    message:
+                        "Authentication required.",
+
+                });
+
+            }
+
+
+            const {
+                currentPassword,
+                newPassword,
+            } = req.body;
+
+
+            if (
+                !currentPassword ||
+                !newPassword
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Current password and new password are required.",
+
+                });
+
+            }
+
+
+            if (
+                newPassword.length < 6
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "New password must contain at least 6 characters.",
+
+                });
+
+            }
+
+
+            const result =
+                await pool.query(
+
+                    `
+                    SELECT password
+                    FROM users
+                    WHERE id = $1
+                    `,
+
+                    [
+                        req.session.user.id
+                    ]
+
+                );
+
+
+            if (
+                result.rows.length === 0
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found.",
+
+                });
+
+            }
+
+
+            const user =
+                result.rows[0];
+
+
+            const passwordMatch =
+                await bcrypt.compare(
+
+                    currentPassword,
+
+                    user.password
+
+                );
+
+
+            if (!passwordMatch) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Current password is incorrect.",
+
+                });
+
+            }
+
+
+            const hashedPassword =
+                await bcrypt.hash(
+                    newPassword,
+                    12
+                );
+
+
+            await pool.query(
+
+                `
+                UPDATE users
+                SET
+                    password = $1,
+                    must_change_password = FALSE
+                WHERE id = $2
+                `,
+
+                [
+                    hashedPassword,
+
+                    req.session.user.id,
+                ]
+
+            );
+
+
+            req.session.user.mustChangePassword =
+                false;
+
+
+            req.session.save((error) => {
+
+                if (error) {
+
+                    console.error(
+                        "SESSION SAVE ERROR:",
+                        error
+                    );
+
+                    return res.status(500).json({
+
+                        success: false,
+
+                        message:
+                            "Password changed but session update failed.",
+
+                    });
+
+                }
+
+
+                return res.json({
+
+                    success: true,
+
+                    message:
+                        "Password changed successfully.",
+
+                });
 
             });
 
-        }
+        } catch (error) {
+
+            console.error(
+                "CHANGE PASSWORD ERROR:",
+                error
+            );
 
 
-        const {
-            currentPassword,
-            newPassword,
-        } = req.body;
-
-
-        if (!currentPassword || !newPassword) {
-
-            return res.status(400).json({
+            return res.status(500).json({
 
                 success: false,
 
                 message:
-                    "Current password and new password are required.",
+                    "Failed to change password.",
 
             });
 
         }
-
-
-        if (newPassword.length < 6) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "New password must contain at least 6 characters.",
-
-            });
-
-        }
-
-
-        const result = await pool.query(
-
-            `
-            SELECT password
-            FROM users
-            WHERE id = $1
-            `,
-
-            [req.session.user.id]
-
-        );
-
-
-        if (result.rows.length === 0) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                message: "User not found.",
-
-            });
-
-        }
-
-
-        const user = result.rows[0];
-
-
-        const passwordMatch = await bcrypt.compare(
-
-            currentPassword,
-
-            user.password
-
-        );
-
-
-        if (!passwordMatch) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message: "Current password is incorrect.",
-
-            });
-
-        }
-
-
-        const hashedPassword = await bcrypt.hash(
-
-            newPassword,
-
-            12
-
-        );
-
-
-        await pool.query(
-
-            `
-            UPDATE users
-            SET
-                password = $1,
-                must_change_password = FALSE
-            WHERE id = $2
-            `,
-
-            [
-                hashedPassword,
-                req.session.user.id,
-            ]
-
-        );
-
-
-        req.session.user.mustChangePassword = false;
-
-
-        res.json({
-
-            success: true,
-
-            message: "Password changed successfully.",
-
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Change password error:",
-            error
-        );
-
-
-        res.status(500).json({
-
-            success: false,
-
-            message: "Failed to change password.",
-
-        });
 
     }
-
-});
+);
 
 
 export default router;
