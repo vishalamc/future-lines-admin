@@ -3,10 +3,15 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+
 import AddStudent from "./pages/AddStudent";
 import StudentDashboard from "./pages/StudentDashboard";
+
 import Attendance from "./pages/Attendance";
 import AttendanceReport from "./pages/AttendanceReport";
+
+import ChangePassword from "./pages/ChangePassword";
+
 
 function App() {
 
@@ -66,7 +71,22 @@ function App() {
                 }
             />
 
-             {/* ==========================================
+
+            {/* ==========================================
+                ATTENDANCE
+            ========================================== */}
+
+            <Route
+                path="/attendance"
+                element={
+                    <ProtectedRoute role="admin">
+                        <Attendance />
+                    </ProtectedRoute>
+                }
+            />
+
+
+            {/* ==========================================
                 ATTENDANCE REPORT
             ========================================== */}
 
@@ -93,14 +113,20 @@ function App() {
                 }
             />
 
+
+            {/* ==========================================
+                CHANGE PASSWORD
+                ADMIN + STUDENT
+            ========================================== */}
+
             <Route
-                path="/attendance"
+                path="/change-password"
                 element={
-                    <ProtectedRoute role="admin">
-                    <Attendance />
+                    <ProtectedRoute>
+                        <ChangePassword />
                     </ProtectedRoute>
-                    }
-            />          
+                }
+            />
 
 
             {/* ==========================================
@@ -122,6 +148,4 @@ function App() {
     );
 
 }
-
-
 export default App;
