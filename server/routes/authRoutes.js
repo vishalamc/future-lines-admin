@@ -17,23 +17,28 @@ router.post("/login", async (req, res) => {
 
         const { email, password } = req.body;
 
+        // -------------------------------------------------
+        // Validate input
+        // -------------------------------------------------
 
         if (!email || !password) {
 
             return res.status(400).json({
                 success: false,
-                message:
-                    "Email and password are required.",
+                message: "Email and password are required."
             });
 
         }
 
+        const cleanEmail = email.trim();
 
-        console.log(
-            "LOGIN REQUEST:",
-            email
-        );
+        console.log("----------------------------------------");
+        console.log("LOGIN REQUEST:", cleanEmail);
 
+
+        // -------------------------------------------------
+        // Find user
+        // -------------------------------------------------
 
         const result = await pool.query(
             `
@@ -46,8 +51,9 @@ router.post("/login", async (req, res) => {
                 must_change_password
             FROM users
             WHERE LOWER(email) = LOWER($1)
+            LIMIT 1
             `,
-            [email.trim()]
+            [cleanEmail]
         );
 
 
@@ -57,12 +63,17 @@ router.post("/login", async (req, res) => {
         );
 
 
+        // -------------------------------------------------
+        // User not found
+        // -------------------------------------------------
+
         if (result.rows.length === 0) {
+
+            console.log("LOGIN FAILED: USER NOT FOUND");
 
             return res.status(401).json({
                 success: false,
-                message:
-                    "Invalid email or password.",
+                message: "Invalid email or password."
             });
 
         }
@@ -71,22 +82,32 @@ router.post("/login", async (req, res) => {
         const user = result.rows[0];
 
 
-        const passwordMatch =
-            await bcrypt.compare(
-                password,
-                user.password
-            );
+        // -------------------------------------------------
+        // Compare password
+        // -------------------------------------------------
+
+        const passwordMatch = await bcrypt.compare(
+            password,
+            user.password
+        );
 
 
         if (!passwordMatch) {
 
+            console.log("LOGIN FAILED: WRONG PASSWORD");
+
             return res.status(401).json({
                 success: false,
-                message:
-                    "Invalid email or password.",
+                message: "Invalid email or password."
             });
 
         }
+
+
+        console.log(
+            "PASSWORD VERIFIED FOR USER:",
+            user.id
+        );
 
 
         // =================================================
@@ -104,14 +125,19 @@ router.post("/login", async (req, res) => {
             role: user.role,
 
             mustChangePassword:
-                user.must_change_password,
+                user.must_change_password ?? false
 
         };
 
 
+        console.log(
+            "SESSION USER CREATED:",
+            req.session.user
+        );
+
+
         // =================================================
-        // IMPORTANT:
-        // WAIT UNTIL SESSION IS SAVED
+        // SAVE SESSION TO POSTGRESQL
         // =================================================
 
         req.session.save((error) => {
@@ -128,7 +154,7 @@ router.post("/login", async (req, res) => {
                     success: false,
 
                     message:
-                        "Failed to create login session.",
+                        "Failed to create login session."
 
                 });
 
@@ -136,20 +162,31 @@ router.post("/login", async (req, res) => {
 
 
             console.log(
-                "SESSION SAVED:",
+                "SESSION SAVED ID:",
+                req.sessionID
+            );
+
+
+            console.log(
+                "SESSION SAVED USER:",
                 req.session.user
             );
 
 
-            return res.json({
+            console.log("----------------------------------------");
+
+
+            // -------------------------------------------------
+            // Send response
+            // -------------------------------------------------
+
+            return res.status(200).json({
 
                 success: true,
 
-                message:
-                    "Login successful.",
+                message: "Login successful.",
 
-                user:
-                    req.session.user,
+                user: req.session.user
 
             });
 
@@ -169,7 +206,7 @@ router.post("/login", async (req, res) => {
             success: false,
 
             message:
-                "Server error during login.",
+                "Server error during login."
 
         });
 
@@ -180,14 +217,111 @@ router.post("/login", async (req, res) => {
 
 // =====================================================
 // CURRENT LOGGED-IN USER
+// GET /api/auth/me
 // =====================================================
 
-router.get("/me", (req, res) => {
+router.get("/me", async (req, res) => {
 
-    console.log(
-        "ME REQUEST"
-    );
+    try {
 
+        console.log("----------------------------------------");
+        console.log("ME REQUEST");
+
+        console.log(
+            "SESSION ID:",
+            req.sessionID
+        );
+
+        console.log(
+            "COOKIE HEADER:",
+            req.headers.cookie || "NO COOKIE"
+        );
+
+        console.log(
+            "SESSION USER:",
+            req.session?.user
+        );
+
+
+        // -------------------------------------------------
+        // Check authentication
+        // -------------------------------------------------
+
+        if (
+            !req.session ||
+            !req.session.user
+        ) {
+
+            console.log(
+                "ME RESULT: NOT AUTHENTICATED"
+            );
+
+            console.log("----------------------------------------");
+
+
+            return res.status(401).json({
+
+                success: false,
+
+                message:
+                    "Not authenticated."
+
+            });
+
+        }
+
+
+        // -------------------------------------------------
+        // User is authenticated
+        // -------------------------------------------------
+
+        console.log(
+            "ME RESULT: AUTHENTICATED USER",
+            req.session.user
+        );
+
+        console.log("----------------------------------------");
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            user: req.session.user
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "ME ERROR:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Unable to verify authentication."
+
+        });
+
+    }
+
+});
+
+
+// =====================================================
+// LOGOUT
+// POST /api/auth/logout
+// =====================================================
+
+router.post("/logout", (req, res) => {
+
+    console.log("----------------------------------------");
+    console.log("LOGOUT REQUEST");
 
     console.log(
         "SESSION ID:",
@@ -195,46 +329,27 @@ router.get("/me", (req, res) => {
     );
 
 
-    console.log(
-        "SESSION USER:",
-        req.session?.user
-    );
+    // -------------------------------------------------
+    // No session
+    // -------------------------------------------------
 
+    if (!req.session) {
 
-    if (
-        !req.session ||
-        !req.session.user
-    ) {
+        return res.json({
 
-        return res.status(401).json({
-
-            success: false,
+            success: true,
 
             message:
-                "Not authenticated.",
+                "Already logged out."
 
         });
 
     }
 
 
-    return res.json({
-
-        success: true,
-
-        user:
-            req.session.user,
-
-    });
-
-});
-
-
-// =====================================================
-// LOGOUT
-// =====================================================
-
-router.post("/logout", (req, res) => {
+    // -------------------------------------------------
+    // Destroy session
+    // -------------------------------------------------
 
     req.session.destroy((error) => {
 
@@ -245,40 +360,52 @@ router.post("/logout", (req, res) => {
                 error
             );
 
+
             return res.status(500).json({
 
                 success: false,
 
                 message:
-                    "Logout failed.",
+                    "Logout failed."
 
             });
 
         }
 
 
+        // -------------------------------------------------
+        // Clear browser cookie
+        // -------------------------------------------------
+
         res.clearCookie(
             "connect.sid",
             {
                 httpOnly: true,
+
                 secure:
-                    process.env.NODE_ENV ===
-                    "production",
+                    process.env.NODE_ENV === "production",
+
                 sameSite:
-                    process.env.NODE_ENV ===
-                    "production"
+                    process.env.NODE_ENV === "production"
                         ? "none"
-                        : "lax",
+                        : "lax"
             }
         );
 
 
-        return res.json({
+        console.log(
+            "LOGOUT SUCCESSFUL"
+        );
+
+        console.log("----------------------------------------");
+
+
+        return res.status(200).json({
 
             success: true,
 
             message:
-                "Logout successful.",
+                "Logout successful."
 
         });
 
@@ -289,6 +416,7 @@ router.post("/logout", (req, res) => {
 
 // =====================================================
 // CHANGE PASSWORD
+// POST /api/auth/change-password
 // ADMIN + STUDENT
 // =====================================================
 
@@ -297,6 +425,10 @@ router.post(
     async (req, res) => {
 
         try {
+
+            // -------------------------------------------------
+            // Check authentication
+            // -------------------------------------------------
 
             if (
                 !req.session ||
@@ -308,7 +440,7 @@ router.post(
                     success: false,
 
                     message:
-                        "Authentication required.",
+                        "Authentication required."
 
                 });
 
@@ -317,9 +449,13 @@ router.post(
 
             const {
                 currentPassword,
-                newPassword,
+                newPassword
             } = req.body;
 
+
+            // -------------------------------------------------
+            // Validate passwords
+            // -------------------------------------------------
 
             if (
                 !currentPassword ||
@@ -331,7 +467,7 @@ router.post(
                     success: false,
 
                     message:
-                        "Current password and new password are required.",
+                        "Current password and new password are required."
 
                 });
 
@@ -347,39 +483,42 @@ router.post(
                     success: false,
 
                     message:
-                        "New password must contain at least 6 characters.",
+                        "New password must contain at least 6 characters."
 
                 });
 
             }
 
 
-            const result =
-                await pool.query(
-
-                    `
-                    SELECT password
-                    FROM users
-                    WHERE id = $1
-                    `,
-
-                    [
-                        req.session.user.id
-                    ]
-
-                );
+            const userId =
+                req.session.user.id;
 
 
-            if (
-                result.rows.length === 0
-            ) {
+            // -------------------------------------------------
+            // Get current password
+            // -------------------------------------------------
+
+            const result = await pool.query(
+                `
+                SELECT
+                    id,
+                    password
+                FROM users
+                WHERE id = $1
+                LIMIT 1
+                `,
+                [userId]
+            );
+
+
+            if (result.rows.length === 0) {
 
                 return res.status(404).json({
 
                     success: false,
 
                     message:
-                        "User not found.",
+                        "User not found."
 
                 });
 
@@ -390,13 +529,14 @@ router.post(
                 result.rows[0];
 
 
+            // -------------------------------------------------
+            // Verify current password
+            // -------------------------------------------------
+
             const passwordMatch =
                 await bcrypt.compare(
-
                     currentPassword,
-
                     user.password
-
                 );
 
 
@@ -407,12 +547,16 @@ router.post(
                     success: false,
 
                     message:
-                        "Current password is incorrect.",
+                        "Current password is incorrect."
 
                 });
 
             }
 
+
+            // -------------------------------------------------
+            // Hash new password
+            // -------------------------------------------------
 
             const hashedPassword =
                 await bcrypt.hash(
@@ -421,8 +565,11 @@ router.post(
                 );
 
 
-            await pool.query(
+            // -------------------------------------------------
+            // Update password
+            // -------------------------------------------------
 
+            await pool.query(
                 `
                 UPDATE users
                 SET
@@ -430,15 +577,16 @@ router.post(
                     must_change_password = FALSE
                 WHERE id = $2
                 `,
-
                 [
                     hashedPassword,
-
-                    req.session.user.id,
+                    userId
                 ]
-
             );
 
+
+            // -------------------------------------------------
+            // Update session
+            // -------------------------------------------------
 
             req.session.user.mustChangePassword =
                 false;
@@ -453,24 +601,25 @@ router.post(
                         error
                     );
 
+
                     return res.status(500).json({
 
                         success: false,
 
                         message:
-                            "Password changed but session update failed.",
+                            "Password changed but session update failed."
 
                     });
 
                 }
 
 
-                return res.json({
+                return res.status(200).json({
 
                     success: true,
 
                     message:
-                        "Password changed successfully.",
+                        "Password changed successfully."
 
                 });
 
@@ -489,7 +638,7 @@ router.post(
                 success: false,
 
                 message:
-                    "Failed to change password.",
+                    "Failed to change password."
 
             });
 
