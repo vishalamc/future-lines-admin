@@ -9,10 +9,10 @@ const router = express.Router();
 // =====================================================
 // LOGIN
 // ADMIN + STUDENT
+// POST /api/auth/login
 // =====================================================
 
 router.post("/login", async (req, res) => {
-
     try {
 
         const { email, password } = req.body;
@@ -22,15 +22,13 @@ router.post("/login", async (req, res) => {
         // -------------------------------------------------
 
         if (!email || !password) {
-
             return res.status(400).json({
                 success: false,
                 message: "Email and password are required."
             });
-
         }
 
-        const cleanEmail = email.trim();
+        const cleanEmail = email.trim().toLowerCase();
 
         console.log("----------------------------------------");
         console.log("LOGIN REQUEST:", cleanEmail);
@@ -48,14 +46,14 @@ router.post("/login", async (req, res) => {
                 email,
                 password,
                 role,
-                must_change_password
+                COALESCE(must_change_password, FALSE)
+                    AS must_change_password
             FROM users
             WHERE LOWER(email) = LOWER($1)
             LIMIT 1
             `,
             [cleanEmail]
         );
-
 
         console.log(
             "USER FOUND:",
@@ -69,17 +67,35 @@ router.post("/login", async (req, res) => {
 
         if (result.rows.length === 0) {
 
-            console.log("LOGIN FAILED: USER NOT FOUND");
+            console.log(
+                "LOGIN FAILED: USER NOT FOUND"
+            );
 
             return res.status(401).json({
                 success: false,
                 message: "Invalid email or password."
             });
-
         }
 
 
         const user = result.rows[0];
+
+
+        // -------------------------------------------------
+        // Check password hash
+        // -------------------------------------------------
+
+        if (!user.password) {
+
+            console.log(
+                "LOGIN FAILED: PASSWORD NOT FOUND"
+            );
+
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
 
 
         // -------------------------------------------------
@@ -94,13 +110,14 @@ router.post("/login", async (req, res) => {
 
         if (!passwordMatch) {
 
-            console.log("LOGIN FAILED: WRONG PASSWORD");
+            console.log(
+                "LOGIN FAILED: WRONG PASSWORD"
+            );
 
             return res.status(401).json({
                 success: false,
                 message: "Invalid email or password."
             });
-
         }
 
 
@@ -111,7 +128,7 @@ router.post("/login", async (req, res) => {
 
 
         // =================================================
-        // CREATE SESSION
+        // CREATE SESSION USER
         // =================================================
 
         req.session.user = {
@@ -124,8 +141,12 @@ router.post("/login", async (req, res) => {
 
             role: user.role,
 
+            // IMPORTANT:
+            // JavaScript uses camelCase.
+            // PostgreSQL uses snake_case.
+
             mustChangePassword:
-                user.must_change_password ?? false
+                user.must_change_password === true
 
         };
 
@@ -137,7 +158,7 @@ router.post("/login", async (req, res) => {
 
 
         // =================================================
-        // SAVE SESSION TO POSTGRESQL
+        // SAVE SESSION
         // =================================================
 
         req.session.save((error) => {
@@ -150,14 +171,10 @@ router.post("/login", async (req, res) => {
                 );
 
                 return res.status(500).json({
-
                     success: false,
-
                     message:
                         "Failed to create login session."
-
                 });
-
             }
 
 
@@ -192,14 +209,12 @@ router.post("/login", async (req, res) => {
 
         });
 
-
     } catch (error) {
 
         console.error(
             "LOGIN ERROR:",
             error
         );
-
 
         return res.status(500).json({
 
@@ -209,9 +224,7 @@ router.post("/login", async (req, res) => {
                 "Server error during login."
 
         });
-
     }
-
 });
 
 
@@ -258,7 +271,6 @@ router.get("/me", async (req, res) => {
 
             console.log("----------------------------------------");
 
-
             return res.status(401).json({
 
                 success: false,
@@ -267,12 +279,11 @@ router.get("/me", async (req, res) => {
                     "Not authenticated."
 
             });
-
         }
 
 
         // -------------------------------------------------
-        // User is authenticated
+        // Return logged-in user
         // -------------------------------------------------
 
         console.log(
@@ -298,7 +309,6 @@ router.get("/me", async (req, res) => {
             error
         );
 
-
         return res.status(500).json({
 
             success: false,
@@ -307,9 +317,7 @@ router.get("/me", async (req, res) => {
                 "Unable to verify authentication."
 
         });
-
     }
-
 });
 
 
@@ -335,7 +343,7 @@ router.post("/logout", (req, res) => {
 
     if (!req.session) {
 
-        return res.json({
+        return res.status(200).json({
 
             success: true,
 
@@ -343,7 +351,6 @@ router.post("/logout", (req, res) => {
                 "Already logged out."
 
         });
-
     }
 
 
@@ -360,7 +367,6 @@ router.post("/logout", (req, res) => {
                 error
             );
 
-
             return res.status(500).json({
 
                 success: false,
@@ -369,7 +375,6 @@ router.post("/logout", (req, res) => {
                     "Logout failed."
 
             });
-
         }
 
 
@@ -410,14 +415,13 @@ router.post("/logout", (req, res) => {
         });
 
     });
-
 });
 
 
 // =====================================================
 // CHANGE PASSWORD
-// POST /api/auth/change-password
 // ADMIN + STUDENT
+// POST /api/auth/change-password
 // =====================================================
 
 router.post(
@@ -443,7 +447,6 @@ router.post(
                         "Authentication required."
 
                 });
-
             }
 
 
@@ -470,7 +473,6 @@ router.post(
                         "Current password and new password are required."
 
                 });
-
             }
 
 
@@ -486,9 +488,12 @@ router.post(
                         "New password must contain at least 6 characters."
 
                 });
-
             }
 
+
+            // -------------------------------------------------
+            // Get logged-in user ID
+            // -------------------------------------------------
 
             const userId =
                 req.session.user.id;
@@ -511,7 +516,9 @@ router.post(
             );
 
 
-            if (result.rows.length === 0) {
+            if (
+                result.rows.length === 0
+            ) {
 
                 return res.status(404).json({
 
@@ -521,7 +528,6 @@ router.post(
                         "User not found."
 
                 });
-
             }
 
 
@@ -550,7 +556,6 @@ router.post(
                         "Current password is incorrect."
 
                 });
-
             }
 
 
@@ -592,6 +597,10 @@ router.post(
                 false;
 
 
+            // -------------------------------------------------
+            // Save updated session
+            // -------------------------------------------------
+
             req.session.save((error) => {
 
                 if (error) {
@@ -601,7 +610,6 @@ router.post(
                         error
                     );
 
-
                     return res.status(500).json({
 
                         success: false,
@@ -610,7 +618,6 @@ router.post(
                             "Password changed but session update failed."
 
                     });
-
                 }
 
 
@@ -632,7 +639,6 @@ router.post(
                 error
             );
 
-
             return res.status(500).json({
 
                 success: false,
@@ -641,11 +647,8 @@ router.post(
                     "Failed to change password."
 
             });
-
         }
 
     }
 );
-
-
 export default router;
