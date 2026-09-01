@@ -1,65 +1,187 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
+
 function ProtectedRoute({ children, role }) {
 
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
+    const [loading, setLoading] =
+        useState(true);
 
+    const [user, setUser] =
+        useState(null);
+
+
+    // ==================================================
+    // CHECK AUTHENTICATION
+    // ==================================================
 
     useEffect(() => {
 
-        checkAuthentication();
-
-    }, []);
+        let isMounted = true;
 
 
-    const checkAuthentication = async () => {
+        const checkAuthentication = async () => {
 
-        try {
+            try {
 
-            const response = await fetch(
-                "/api/auth/me",
-                {
-                    credentials: "include",
+                console.log(
+                    "Checking authentication..."
+                );
+
+
+                const response =
+                    await fetch(
+                        "/api/auth/me",
+                        {
+                            method: "GET",
+
+                            credentials: "include",
+
+                            headers: {
+                                "Accept":
+                                    "application/json"
+                            }
+                        }
+                    );
+
+
+                console.log(
+                    "AUTH RESPONSE STATUS:",
+                    response.status
+                );
+
+
+                // ------------------------------------------------
+                // NOT AUTHENTICATED
+                // ------------------------------------------------
+
+                if (!response.ok) {
+
+                    let errorData = null;
+
+                    try {
+
+                        errorData =
+                            await response.json();
+
+                    } catch {
+
+                        errorData = null;
+
+                    }
+
+
+                    console.log(
+                        "AUTHENTICATION FAILED:",
+                        errorData
+                    );
+
+
+                    if (isMounted) {
+
+                        setUser(null);
+
+                    }
+
+                    return;
                 }
-            );
 
 
-            if (!response.ok) {
+                // ------------------------------------------------
+                // Read response
+                // ------------------------------------------------
 
-                setUser(null);
+                const data =
+                    await response.json();
 
-                return;
+
+                console.log(
+                    "AUTH RESPONSE:",
+                    data
+                );
+
+
+                // ------------------------------------------------
+                // Validate user
+                // ------------------------------------------------
+
+                if (
+                    !data ||
+                    !data.success ||
+                    !data.user
+                ) {
+
+                    console.error(
+                        "Invalid authentication response:",
+                        data
+                    );
+
+
+                    if (isMounted) {
+
+                        setUser(null);
+
+                    }
+
+                    return;
+                }
+
+
+                console.log(
+                    "Authenticated user:",
+                    data.user
+                );
+
+
+                if (isMounted) {
+
+                    setUser(
+                        data.user
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Authentication request error:",
+                    error
+                );
+
+
+                if (isMounted) {
+
+                    setUser(null);
+
+                }
+
+            } finally {
+
+                if (isMounted) {
+
+                    setLoading(false);
+
+                }
 
             }
 
-
-            const data = await response.json();
-
-
-            console.log("Authenticated user:", data.user);
+        };
 
 
-            setUser(data.user);
+        checkAuthentication();
 
 
-        } catch (error) {
+        // ------------------------------------------------
+        // Cleanup
+        // ------------------------------------------------
 
-            console.error(
-                "Authentication error:",
-                error
-            );
+        return () => {
 
-            setUser(null);
+            isMounted = false;
 
-        } finally {
+        };
 
-            setLoading(false);
-
-        }
-
-    };
+    }, []);
 
 
     // ==================================================
@@ -72,7 +194,16 @@ function ProtectedRoute({ children, role }) {
 
             <div className="loading-screen">
 
-                Checking authentication...
+                <div className="loading-content">
+
+                    <div className="loading-spinner">
+                    </div>
+
+                    <p>
+                        Checking authentication...
+                    </p>
+
+                </div>
 
             </div>
 
@@ -87,11 +218,18 @@ function ProtectedRoute({ children, role }) {
 
     if (!user) {
 
+        console.log(
+            "No authenticated user. Redirecting to login."
+        );
+
+
         return (
+
             <Navigate
                 to="/login"
                 replace
             />
+
         );
 
     }
@@ -106,54 +244,82 @@ function ProtectedRoute({ children, role }) {
         user.role !== role
     ) {
 
+        console.log(
+            "ROLE MISMATCH:",
+            {
+                requiredRole: role,
+                actualRole: user.role
+            }
+        );
 
-        // Admin trying to access student page
 
-        if (user.role === "admin") {
+        // ------------------------------------------------
+        // ADMIN
+        // ------------------------------------------------
+
+        if (
+            user.role === "admin"
+        ) {
 
             return (
+
                 <Navigate
                     to="/dashboard"
                     replace
                 />
+
             );
 
         }
 
 
-        // Student trying to access admin page
+        // ------------------------------------------------
+        // STUDENT
+        // ------------------------------------------------
 
-        if (user.role === "student") {
+        if (
+            user.role === "student"
+        ) {
 
             return (
+
                 <Navigate
                     to="/student-dashboard"
                     replace
                 />
+
             );
 
         }
 
 
-        // Unknown role
+        // ------------------------------------------------
+        // UNKNOWN ROLE
+        // ------------------------------------------------
 
         return (
+
             <Navigate
                 to="/login"
                 replace
             />
+
         );
 
     }
 
 
     // ==================================================
-    // AUTHENTICATED + CORRECT ROLE
+    // AUTHENTICATED
     // ==================================================
+
+    console.log(
+        "Protected route access granted:",
+        user
+    );
+
 
     return children;
 
 }
-
-
 export default ProtectedRoute;
