@@ -7,99 +7,134 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import pool from "./config/db.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 
-// --------------------------------------------------
-// Load Environment Variables
-// --------------------------------------------------
+
+// =====================================================
+// LOAD ENVIRONMENT VARIABLES
+// =====================================================
 
 dotenv.config();
 
 
-// --------------------------------------------------
-// Create Express App
-// --------------------------------------------------
+// =====================================================
+// CREATE EXPRESS APP
+// =====================================================
 
 const app = express();
 
 const PORT = process.env.PORT || 5000;
 
 
-// --------------------------------------------------
-// File Paths
-// --------------------------------------------------
+// =====================================================
+// FILE PATHS
+// =====================================================
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename =
+    fileURLToPath(import.meta.url);
 
-const __dirname = path.dirname(__filename);
-
-
-// --------------------------------------------------
-// PostgreSQL Session Store
-// --------------------------------------------------
-
-const PgSession = connectPgSimple(session);
+const __dirname =
+    path.dirname(__filename);
 
 
-// --------------------------------------------------
+// =====================================================
+// TRUST PROXY
+// IMPORTANT FOR RENDER
+// =====================================================
+
+if (
+    process.env.NODE_ENV === "production"
+) {
+    app.set("trust proxy", 1);
+}
+
+
+// =====================================================
 // CORS
-// IMPORTANT: CORS should come before API routes
-// --------------------------------------------------
+// =====================================================
+
+const frontendURL =
+    process.env.FRONTEND_URL ||
+    "http://localhost:5173";
+
+
+console.log(
+    "FRONTEND URL:",
+    frontendURL
+);
+
 
 app.use(
     cors({
-        origin:
-            process.env.FRONTEND_URL ||
-            "http://localhost:5173",
 
-        credentials: true,
+        origin: frontendURL,
+
+        credentials: true
+
     })
 );
 
 
-// --------------------------------------------------
-// Body Parser
-// --------------------------------------------------
+// =====================================================
+// BODY PARSER
+// =====================================================
 
-app.use(express.json());
+app.use(
+    express.json()
+);
+
 
 app.use(
     express.urlencoded({
-        extended: true,
+        extended: true
     })
 );
 
 
-// --------------------------------------------------
+// =====================================================
+// POSTGRESQL SESSION STORE
+// =====================================================
+
+const PgSession =
+    connectPgSimple(session);
+
+
+// =====================================================
 // SESSION
-// IMPORTANT:
-// Session MUST come before protected routes
-// --------------------------------------------------
+// =====================================================
 
 app.use(
     session({
 
-        store: new PgSession({
+        store:
+            new PgSession({
 
-            pool: pool,
+                pool: pool,
 
-            tableName: "user_sessions",
+                tableName:
+                    "user_sessions",
 
-            createTableIfMissing: true,
+                createTableIfMissing:
+                    true
 
-        }),
+            }),
 
         secret:
             process.env.SESSION_SECRET ||
-            "future-lines-secret",
+            "future-lines-secret-change-this",
 
         resave: false,
 
         saveUninitialized: false,
 
+        rolling: true,
+
         cookie: {
+
+            name: "connect.sid",
 
             httpOnly: true,
 
@@ -112,53 +147,61 @@ app.use(
                     : "lax",
 
             maxAge:
-                1000 * 60 * 60 * 8,
+                1000 *
+                60 *
+                60 *
+                8
 
-        },
+        }
 
     })
 );
 
 
-// --------------------------------------------------
-// API ROUTES
-// IMPORTANT:
-// These MUST come AFTER session middleware
-// --------------------------------------------------
+// =====================================================
+// AUTH ROUTES
+// =====================================================
 
-
-// Authentication
 app.use(
     "/api/auth",
     authRoutes
 );
 
 
-// Student Management
+// =====================================================
+// STUDENT ROUTES
+// =====================================================
+
 app.use(
     "/api/students",
     studentRoutes
 );
-// Attendance
+
+
+// =====================================================
+// ATTENDANCE ROUTES
+// =====================================================
+
 app.use(
     "/api/attendance",
     attendanceRoutes
 );
 
-// --------------------------------------------------
-// Health Check
-// --------------------------------------------------
+
+// =====================================================
+// HEALTH CHECK
+// =====================================================
 
 app.get(
     "/api/health",
     (req, res) => {
 
-        res.json({
+        res.status(200).json({
 
             success: true,
 
             message:
-                "Future Lines Admin API is running",
+                "Future Lines Admin API is running"
 
         });
 
@@ -166,9 +209,9 @@ app.get(
 );
 
 
-// --------------------------------------------------
-// Serve React Production Files
-// --------------------------------------------------
+// =====================================================
+// SERVE REACT PRODUCTION BUILD
+// =====================================================
 
 const frontendPath =
     path.join(
@@ -178,13 +221,16 @@ const frontendPath =
 
 
 app.use(
-    express.static(frontendPath)
+    express.static(
+        frontendPath
+    )
 );
 
 
-// --------------------------------------------------
-// React SPA Fallback
-// --------------------------------------------------
+// =====================================================
+// REACT SPA FALLBACK
+// EXPRESS 5
+// =====================================================
 
 app.get(
     "/{*splat}",
@@ -201,9 +247,34 @@ app.get(
 );
 
 
-// --------------------------------------------------
-// Start Server
-// --------------------------------------------------
+// =====================================================
+// ERROR HANDLER
+// =====================================================
+
+app.use(
+    (error, req, res, next) => {
+
+        console.error(
+            "UNHANDLED SERVER ERROR:",
+            error
+        );
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                "Internal server error."
+
+        });
+
+    }
+);
+
+
+// =====================================================
+// START SERVER
+// =====================================================
 
 app.listen(
     PORT,
@@ -212,6 +283,12 @@ app.listen(
 
         console.log(
             `Future Lines Admin running on port ${PORT}`
+        );
+
+        console.log(
+            `Environment: ${
+                process.env.NODE_ENV || "development"
+            }`
         );
 
     }
