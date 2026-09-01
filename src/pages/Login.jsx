@@ -255,7 +255,7 @@ function Login() {
                     <div className="welcome-content">
 
                         <h1>
-                            Welcome Back!
+                            Sign IN
                         </h1>
 
                         <p>
