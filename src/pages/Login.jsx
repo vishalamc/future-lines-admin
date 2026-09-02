@@ -3,22 +3,15 @@ import { useNavigate } from "react-router-dom";
 
 import "./Login.css";
 
-
 function Login() {
 
     const navigate = useNavigate();
 
-    const [email, setEmail] =
-        useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
-    const [password, setPassword] =
-        useState("");
-
-    const [loading, setLoading] =
-        useState(false);
-
-    const [error, setError] =
-        useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
 
     // ==================================================
@@ -35,60 +28,31 @@ function Login() {
 
         try {
 
-            const response =
-                await fetch(
-                    "/api/auth/login",
-                    {
-                        method: "POST",
+            const response = await fetch(
+                "/api/auth/login",
+                {
+                    method: "POST",
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
 
-                        credentials:
-                            "include",
+                    credentials: "include",
 
-                        body: JSON.stringify({
-                            email:
-                                email.trim(),
-                            password
-                        })
-                    }
-                );
-
-
-            // ------------------------------------------------
-            // Read response safely
-            // ------------------------------------------------
-
-            let data;
-
-            try {
-
-                data =
-                    await response.json();
-
-            } catch {
-
-                data = {
-                    success: false,
-                    message:
-                        "Invalid server response."
-                };
-
-            }
-
-
-            console.log(
-                "LOGIN RESPONSE:",
-                data
+                    body: JSON.stringify({
+                        email,
+                        password,
+                    }),
+                }
             );
 
 
-            // ==================================================
+            const data = await response.json();
+
+
+            // ------------------------------------------
             // LOGIN FAILED
-            // ==================================================
+            // ------------------------------------------
 
             if (!response.ok) {
 
@@ -98,12 +62,13 @@ function Login() {
                 );
 
                 return;
+
             }
 
 
-            // ==================================================
+            // ------------------------------------------
             // CHECK USER
-            // ==================================================
+            // ------------------------------------------
 
             if (!data.user) {
 
@@ -112,6 +77,7 @@ function Login() {
                 );
 
                 return;
+
             }
 
 
@@ -121,70 +87,52 @@ function Login() {
             );
 
 
-            // ==================================================
+            // ------------------------------------------
             // ADMIN LOGIN
-            // ==================================================
+            // ------------------------------------------
 
-            if (
-                data.user.role === "admin"
-            ) {
+            if (data.user.role === "admin") {
 
-                navigate(
-                    "/dashboard",
-                    {
-                        replace: true
-                    }
-                );
+                navigate("/dashboard");
 
                 return;
+
             }
 
 
-            // ==================================================
+            // ------------------------------------------
             // STUDENT LOGIN
-            // ==================================================
+            // ------------------------------------------
 
-            if (
-                data.user.role === "student"
-            ) {
+            if (data.user.role === "student") {
 
-                // ----------------------------------------------
-                // Student must change password
-                // ----------------------------------------------
+                /*
+                 * If you later implement the
+                 * must_change_password feature,
+                 * we can check it here.
+                 */
 
                 if (
-                    data.user.mustChangePassword === true
+                    data.user.must_change_password === true
                 ) {
 
-                    navigate(
-                        "/change-password",
-                        {
-                            replace: true
-                        }
-                    );
+                    navigate("/change-password");
 
                     return;
+
                 }
 
 
-                // ----------------------------------------------
-                // Normal student dashboard
-                // ----------------------------------------------
-
-                navigate(
-                    "/student-dashboard",
-                    {
-                        replace: true
-                    }
-                );
+                navigate("/student-dashboard");
 
                 return;
+
             }
 
 
-            // ==================================================
+            // ------------------------------------------
             // UNKNOWN ROLE
-            // ==================================================
+            // ------------------------------------------
 
             setError(
                 "Your account role is not configured correctly."
@@ -194,13 +142,13 @@ function Login() {
         } catch (error) {
 
             console.error(
-                "LOGIN ERROR:",
+                "Login error:",
                 error
             );
 
 
             setError(
-                "Unable to connect to the server. Please try again."
+                "Unable to connect to the server."
             );
 
 
@@ -213,13 +161,10 @@ function Login() {
     };
 
 
-    // ==================================================
-    // PAGE
-    // ==================================================
-
     return (
 
         <div className="login-page">
+
 
             <div className="login-container">
 
@@ -230,7 +175,9 @@ function Login() {
 
                 <div className="login-left">
 
+
                     <div className="brand">
+
 
                         <div className="brand-logo">
                             FL
@@ -249,21 +196,26 @@ function Login() {
 
                         </div>
 
+
                     </div>
 
 
                     <div className="welcome-content">
 
+
                         <h1>
                             Sign IN
                         </h1>
+
 
                         <p>
                             Login to access your
                             Future Lines account.
                         </p>
 
+
                     </div>
+
 
                 </div>
 
@@ -273,6 +225,7 @@ function Login() {
                 ================================================== */}
 
                 <div className="login-right">
+
 
                     <div className="login-card">
 
@@ -287,61 +240,45 @@ function Login() {
                         </p>
 
 
-                        {/* ==================================================
-                            ERROR
-                        ================================================== */}
+                        {/* ERROR */}
 
                         {error && (
 
-                            <div
-                                className="error-message"
-                                role="alert"
-                            >
+                            <div className="error-message">
                                 {error}
                             </div>
 
                         )}
 
 
-                        {/* ==================================================
-                            FORM
-                        ================================================== */}
+                        {/* FORM */}
 
-                        <form
-                            onSubmit={handleLogin}
-                        >
+                        <form onSubmit={handleLogin}>
 
 
                             {/* EMAIL */}
 
                             <div className="form-group">
 
-                                <label htmlFor="email">
+
+                                <label>
                                     Email Address
                                 </label>
 
 
                                 <input
-                                    id="email"
-
                                     type="email"
-
                                     placeholder="Enter your email"
-
                                     value={email}
-
                                     onChange={(e) =>
                                         setEmail(
                                             e.target.value
                                         )
                                     }
-
                                     autoComplete="email"
-
                                     required
-
-                                    disabled={loading}
                                 />
+
 
                             </div>
 
@@ -350,32 +287,25 @@ function Login() {
 
                             <div className="form-group">
 
-                                <label htmlFor="password">
+
+                                <label>
                                     Password
                                 </label>
 
 
                                 <input
-                                    id="password"
-
                                     type="password"
-
                                     placeholder="Enter your password"
-
                                     value={password}
-
                                     onChange={(e) =>
                                         setPassword(
                                             e.target.value
                                         )
                                     }
-
                                     autoComplete="current-password"
-
                                     required
-
-                                    disabled={loading}
                                 />
+
 
                             </div>
 
@@ -384,9 +314,7 @@ function Login() {
 
                             <button
                                 type="submit"
-
                                 className="login-button"
-
                                 disabled={loading}
                             >
 
@@ -408,13 +336,18 @@ function Login() {
 
                     </div>
 
+
                 </div>
 
+
             </div>
+
 
         </div>
 
     );
+
 }
+
 
 export default Login;
