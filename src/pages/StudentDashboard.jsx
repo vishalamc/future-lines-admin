@@ -567,11 +567,24 @@ function StudentDashboard() {
             </aside>
 
 
-            {/* ==================================================
-                MAIN CONTENT
-            ================================================== */}
+{/* ==================================================
+    MOBILE LOGOUT
+================================================== */}
 
-            <main className="student-main">
+<button
+    className="student-mobile-logout"
+    onClick={handleLogout}
+>
+    <span>↪</span>
+    Logout
+</button>
+
+
+{/* ==================================================
+    MAIN CONTENT
+================================================== */}
+
+<main className="student-main">
 
 
                 {/* ==================================================
@@ -1492,6 +1505,5 @@ function StudentDashboard() {
     );
 
 }
-
 
 export default StudentDashboard;
