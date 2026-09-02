@@ -8,6 +8,10 @@ function AddStudent() {
     const navigate = useNavigate();
 
 
+    // =================================================
+    // FORM DATA
+    // =================================================
+
     const [formData, setFormData] = useState({
 
         name: "",
@@ -17,6 +21,8 @@ function AddStudent() {
         phone: "",
 
         course: "",
+
+        batch: "",
 
         admissionDate: "",
 
@@ -58,7 +64,7 @@ function AddStudent() {
 
 
         setFormData(
-            (previous) => ({
+            previous => ({
 
                 ...previous,
 
@@ -129,7 +135,9 @@ function AddStudent() {
             setSuccess(data);
 
 
-            // Clear form
+            // =================================================
+            // CLEAR FORM
+            // =================================================
 
             setFormData({
 
@@ -140,6 +148,8 @@ function AddStudent() {
                 phone: "",
 
                 course: "",
+
+                batch: "",
 
                 admissionDate: "",
 
@@ -180,7 +190,9 @@ function AddStudent() {
         <div className="add-student-page">
 
 
-            {/* HEADER */}
+            {/* =================================================
+                HEADER
+            ================================================= */}
 
             <div className="add-student-header">
 
@@ -209,7 +221,9 @@ function AddStudent() {
             </div>
 
 
-            {/* SUCCESS */}
+            {/* =================================================
+                SUCCESS MESSAGE
+            ================================================= */}
 
             {success && (
 
@@ -226,6 +240,7 @@ function AddStudent() {
                             Student Created Successfully
                         </h2>
 
+
                         <p>
                             The student account has been
                             created successfully.
@@ -233,6 +248,7 @@ function AddStudent() {
 
 
                         <div className="credentials-box">
+
 
                             <div>
 
@@ -267,6 +283,23 @@ function AddStudent() {
                             <div>
 
                                 <span>
+                                    Batch
+                                </span>
+
+                                <strong>
+                                    {
+                                        success.student.batch ||
+                                        formData.batch ||
+                                        "-"
+                                    }
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
                                     Default Password
                                 </span>
 
@@ -277,6 +310,7 @@ function AddStudent() {
                                 </strong>
 
                             </div>
+
 
                         </div>
 
@@ -289,6 +323,7 @@ function AddStudent() {
 
                         </div>
 
+
                     </div>
 
                 </div>
@@ -296,7 +331,9 @@ function AddStudent() {
             )}
 
 
-            {/* ERROR */}
+            {/* =================================================
+                ERROR MESSAGE
+            ================================================= */}
 
             {error && (
 
@@ -309,7 +346,9 @@ function AddStudent() {
             )}
 
 
-            {/* FORM */}
+            {/* =================================================
+                FORM
+            ================================================= */}
 
             <form
                 className="student-form"
@@ -317,9 +356,12 @@ function AddStudent() {
             >
 
 
-                {/* BASIC INFORMATION */}
+                {/* =================================================
+                    BASIC INFORMATION
+                ================================================= */}
 
                 <div className="form-section">
+
 
                     <div className="section-title">
 
@@ -336,6 +378,8 @@ function AddStudent() {
 
                     <div className="form-grid">
 
+
+                        {/* STUDENT NAME */}
 
                         <div className="form-field">
 
@@ -355,6 +399,8 @@ function AddStudent() {
                         </div>
 
 
+                        {/* EMAIL */}
+
                         <div className="form-field">
 
                             <label>
@@ -373,6 +419,8 @@ function AddStudent() {
                         </div>
 
 
+                        {/* PHONE */}
+
                         <div className="form-field">
 
                             <label>
@@ -389,6 +437,8 @@ function AddStudent() {
 
                         </div>
 
+
+                        {/* COURSE */}
 
                         <div className="form-field">
 
@@ -418,7 +468,8 @@ function AddStudent() {
                                 <option value="PGDCA">
                                     PGDCA
                                 </option>
-                                 <option value="BASICS">
+
+                                <option value="BASICS">
                                     BASICS IN COMPUTER
                                 </option>
 
@@ -447,6 +498,42 @@ function AddStudent() {
                         </div>
 
 
+                        {/* =================================================
+                            BATCH
+                        ================================================= */}
+
+                        <div className="form-field">
+
+                            <label>
+                                Batch *
+                            </label>
+
+                            <select
+                                name="batch"
+                                value={formData.batch}
+                                onChange={handleChange}
+                                required
+                            >
+
+                                <option value="">
+                                    Select Batch
+                                </option>
+
+                                <option value="Morning">
+                                    Morning
+                                </option>
+
+                                <option value="Evening">
+                                    Evening
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        {/* ADMISSION DATE */}
+
                         <div className="form-field">
 
                             <label>
@@ -465,6 +552,8 @@ function AddStudent() {
                         </div>
 
 
+                        {/* DATE OF BIRTH */}
+
                         <div className="form-field">
 
                             <label>
@@ -482,6 +571,8 @@ function AddStudent() {
 
                         </div>
 
+
+                        {/* GENDER */}
 
                         <div className="form-field">
 
@@ -515,14 +606,18 @@ function AddStudent() {
 
                         </div>
 
+
                     </div>
 
                 </div>
 
 
-                {/* ADDRESS */}
+                {/* =================================================
+                    ADDRESS
+                ================================================= */}
 
                 <div className="form-section">
+
 
                     <div className="section-title">
 
@@ -539,6 +634,8 @@ function AddStudent() {
 
                     <div className="form-grid">
 
+
+                        {/* ADDRESS */}
 
                         <div className="form-field full-width">
 
@@ -559,6 +656,8 @@ function AddStudent() {
                         </div>
 
 
+                        {/* CITY */}
+
                         <div className="form-field">
 
                             <label>
@@ -569,12 +668,16 @@ function AddStudent() {
                                 type="text"
                                 name="city"
                                 placeholder="Enter city"
-                                value={formData.city}
+                                value={
+                                    formData.city
+                                }
                                 onChange={handleChange}
                             />
 
                         </div>
 
+
+                        {/* STATE */}
 
                         <div className="form-field">
 
@@ -586,12 +689,16 @@ function AddStudent() {
                                 type="text"
                                 name="state"
                                 placeholder="Enter state"
-                                value={formData.state}
+                                value={
+                                    formData.state
+                                }
                                 onChange={handleChange}
                             />
 
                         </div>
 
+
+                        {/* PIN CODE */}
 
                         <div className="form-field">
 
@@ -603,20 +710,26 @@ function AddStudent() {
                                 type="text"
                                 name="pinCode"
                                 placeholder="Enter PIN code"
-                                value={formData.pinCode}
+                                value={
+                                    formData.pinCode
+                                }
                                 onChange={handleChange}
                             />
 
                         </div>
+
 
                     </div>
 
                 </div>
 
 
-                {/* LOGIN INFORMATION */}
+                {/* =================================================
+                    LOGIN INFORMATION
+                ================================================= */}
 
                 <div className="form-section login-information">
+
 
                     <div className="section-title">
 
@@ -633,6 +746,7 @@ function AddStudent() {
 
 
                     <div className="default-login-box">
+
 
                         <div className="login-info-item">
 
@@ -672,14 +786,18 @@ function AddStudent() {
 
                         </div>
 
+
                     </div>
 
                 </div>
 
 
-                {/* BUTTONS */}
+                {/* =================================================
+                    BUTTONS
+                ================================================= */}
 
                 <div className="form-actions">
+
 
                     <button
                         type="button"
@@ -704,14 +822,18 @@ function AddStudent() {
 
                     </button>
 
+
                 </div>
 
+
             </form>
+
 
         </div>
 
     );
 
 }
+
 
 export default AddStudent;
