@@ -51,6 +51,8 @@ function Attendance() {
 
             setLoading(true);
 
+            setError("");
+
             const response = await fetch(
                 "/api/attendance/students",
                 {
@@ -118,7 +120,10 @@ function Attendance() {
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "Attendance students error:",
+                error
+            );
 
             setError(
                 error.message ||
@@ -213,7 +218,7 @@ function Attendance() {
 
 
     // ==================================================
-    // CHANGE STATUS
+    // CHANGE ATTENDANCE STATUS
     // ==================================================
 
     const changeAttendance = (
@@ -276,11 +281,14 @@ function Attendance() {
 
                     body: JSON.stringify({
 
-                        attendance_date: date,
+                        attendance_date:
+                            date,
 
-                        start_time: startTime,
+                        start_time:
+                            startTime,
 
-                        end_time: endTime,
+                        end_time:
+                            endTime,
 
                         attendance:
                             attendanceData,
@@ -311,7 +319,10 @@ function Attendance() {
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "Save attendance error:",
+                error
+            );
 
             setError(
                 error.message ||
@@ -345,18 +356,13 @@ function Attendance() {
 
 
     // ==================================================
-    // UNIQUE BATCHES
+    // BATCH OPTIONS
+    // MORNING + EVENING
     // ==================================================
 
     const batches = [
-        ...new Set(
-            students
-                .map(
-                    student =>
-                        student.batch
-                )
-                .filter(Boolean)
-        ),
+        "Morning",
+        "Evening"
     ];
 
 
@@ -381,6 +387,10 @@ function Attendance() {
                 ] === "absent"
         ).length;
 
+
+    // ==================================================
+    // UI
+    // ==================================================
 
     return (
 
@@ -430,6 +440,8 @@ function Attendance() {
                 <div className="attendance-control-card">
 
 
+                    {/* DATE */}
+
                     <div className="control-group">
 
                         <label>
@@ -448,6 +460,8 @@ function Attendance() {
 
                     </div>
 
+
+                    {/* START TIME */}
 
                     <div className="control-group">
 
@@ -468,6 +482,8 @@ function Attendance() {
                     </div>
 
 
+                    {/* END TIME */}
+
                     <div className="control-group">
 
                         <label>
@@ -486,6 +502,8 @@ function Attendance() {
 
                     </div>
 
+
+                    {/* COURSE */}
 
                     <div className="control-group">
 
@@ -506,6 +524,7 @@ function Attendance() {
                                 All Courses
                             </option>
 
+
                             {courses.map(
                                 item => (
 
@@ -524,11 +543,14 @@ function Attendance() {
                     </div>
 
 
+                    {/* BATCH */}
+
                     <div className="control-group">
 
                         <label>
                             Batch
                         </label>
+
 
                         <select
                             value={batch}
@@ -543,18 +565,16 @@ function Attendance() {
                                 All Batches
                             </option>
 
-                            {batches.map(
-                                item => (
 
-                                    <option
-                                        key={item}
-                                        value={item}
-                                    >
-                                        {item}
-                                    </option>
+                            <option value="Morning">
+                                Morning
+                            </option>
 
-                                )
-                            )}
+
+                            <option value="Evening">
+                                Evening
+                            </option>
+
 
                         </select>
 
@@ -565,22 +585,30 @@ function Attendance() {
 
 
                 {/* ==========================================
-                    MESSAGES
+                    SUCCESS MESSAGE
                 ========================================== */}
 
                 {message && (
 
                     <div className="success-message">
+
                         ✓ {message}
+
                     </div>
 
                 )}
 
 
+                {/* ==========================================
+                    ERROR MESSAGE
+                ========================================== */}
+
                 {error && (
 
                     <div className="attendance-error">
+
                         {error}
+
                     </div>
 
                 )}
@@ -593,7 +621,10 @@ function Attendance() {
                 <div className="attendance-summary">
 
 
+                    {/* TOTAL */}
+
                     <div>
+
                         <span>
                             Total Students
                         </span>
@@ -601,10 +632,14 @@ function Attendance() {
                         <strong>
                             {filteredStudents.length}
                         </strong>
+
                     </div>
 
 
+                    {/* PRESENT */}
+
                     <div>
+
                         <span>
                             Present
                         </span>
@@ -612,10 +647,14 @@ function Attendance() {
                         <strong className="present-number">
                             {presentCount}
                         </strong>
+
                     </div>
 
 
+                    {/* ABSENT */}
+
                     <div>
+
                         <span>
                             Absent
                         </span>
@@ -623,6 +662,7 @@ function Attendance() {
                         <strong className="absent-number">
                             {absentCount}
                         </strong>
+
                     </div>
 
 
@@ -630,11 +670,13 @@ function Attendance() {
 
 
                 {/* ==========================================
-                    ATTENDANCE TABLE
+                    ATTENDANCE CARD
                 ========================================== */}
 
                 <div className="attendance-card">
 
+
+                    {/* CARD HEADER */}
 
                     <div className="attendance-card-header">
 
@@ -646,14 +688,32 @@ function Attendance() {
                             </h2>
 
                             <p>
-                                {date} &nbsp; | &nbsp;
-                                {startTime} - {endTime}
+
+                                {date}
+
+                                &nbsp; | &nbsp;
+
+                                {startTime}
+
+                                {" - "}
+
+                                {endTime}
+
+                                &nbsp; | &nbsp;
+
+                                {batch === "All"
+                                    ? "All Batches"
+                                    : batch}
+
                             </p>
 
                         </div>
 
 
+                        {/* QUICK ACTIONS */}
+
                         <div className="quick-actions">
+
 
                             <button
                                 onClick={
@@ -672,19 +732,31 @@ function Attendance() {
                                 Mark All Absent
                             </button>
 
+
                         </div>
 
 
                     </div>
 
 
+                    {/* ======================================
+                        LOADING
+                    ====================================== */}
+
                     {loading ? (
 
                         <div className="attendance-loading">
+
                             Loading students...
+
                         </div>
 
+
                     ) : filteredStudents.length === 0 ? (
+
+                        /* ==================================
+                           NO STUDENTS
+                        ================================== */
 
                         <div className="no-students">
 
@@ -703,11 +775,18 @@ function Attendance() {
 
                         </div>
 
+
                     ) : (
+
+                        /* ==================================
+                           TABLE
+                        ================================== */
 
                         <div className="attendance-table-wrapper">
 
+
                             <table className="attendance-table">
+
 
                                 <thead>
 
@@ -744,6 +823,7 @@ function Attendance() {
 
                                 <tbody>
 
+
                                     {filteredStudents.map(
                                         (
                                             student,
@@ -756,41 +836,72 @@ function Attendance() {
                                                 }
                                             >
 
+
+                                                {/* NUMBER */}
+
                                                 <td>
                                                     {index + 1}
                                                 </td>
 
+
+                                                {/* STUDENT ID */}
+
                                                 <td>
+
                                                     <strong>
+
                                                         {
                                                             student.student_id
                                                         }
+
                                                     </strong>
+
                                                 </td>
 
+
+                                                {/* NAME */}
+
                                                 <td>
+
                                                     {
                                                         student.name
                                                     }
+
                                                 </td>
 
+
+                                                {/* COURSE */}
+
                                                 <td>
+
                                                     {
                                                         student.course ||
                                                         "-"
                                                     }
+
                                                 </td>
 
+
+                                                {/* BATCH */}
+
                                                 <td>
+
                                                     {
                                                         student.batch ||
                                                         "-"
                                                     }
+
                                                 </td>
+
+
+                                                {/* ATTENDANCE */}
 
                                                 <td>
 
                                                     <div className="attendance-buttons">
+
+
+                                                        {/* PRESENT */}
 
                                                         <button
                                                             className={
@@ -809,9 +920,13 @@ function Attendance() {
                                                                 )
                                                             }
                                                         >
+
                                                             ✓ Present
+
                                                         </button>
 
+
+                                                        {/* ABSENT */}
 
                                                         <button
                                                             className={
@@ -830,37 +945,48 @@ function Attendance() {
                                                                 )
                                                             }
                                                         >
+
                                                             ✕ Absent
+
                                                         </button>
+
 
                                                     </div>
 
                                                 </td>
+
 
                                             </tr>
 
                                         )
                                     )}
 
+
                                 </tbody>
 
+
                             </table>
+
 
                         </div>
 
                     )}
 
 
-                    {/* SAVE */}
+                    {/* ======================================
+                        SAVE ATTENDANCE
+                    ====================================== */}
 
                     {filteredStudents.length > 0 && (
 
                         <div className="save-attendance">
 
+
                             <button
                                 onClick={
                                     saveAttendance
                                 }
+
                                 disabled={saving}
                             >
 
@@ -871,14 +997,17 @@ function Attendance() {
 
                             </button>
 
+
                         </div>
 
                     )}
+
 
                 </div>
 
 
             </main>
+
 
         </div>
 
