@@ -46,26 +46,65 @@ router.post(
                 city,
                 state,
                 pinCode,
+                batch,
             } = req.body;
+
+
+            // ==========================================
+            // DEBUG - CHECK RECEIVED BATCH
+            // ==========================================
+
+            console.log("Add Student Request:", {
+                name,
+                email,
+                course,
+                batch,
+            });
 
 
             // ==========================================
             // VALIDATION
             // ==========================================
 
-            if (!name || !email || !course) {
+            if (!name || !email || !course || !batch) {
 
                 return res.status(400).json({
 
                     success: false,
 
                     message:
-                        "Name, email and course are required.",
+                        "Name, email, course and batch are required.",
 
                 });
 
             }
 
+
+            // ==========================================
+            // VALIDATE BATCH
+            // ==========================================
+
+            const allowedBatches = [
+                "Morning",
+                "Evening",
+            ];
+
+
+            if (!allowedBatches.includes(batch)) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid batch. Select Morning or Evening.",
+
+                });
+
+            }
+            // ==========================================
+            // START TRANSACTION
+            // ==========================================
 
             await client.query("BEGIN");
 
@@ -109,7 +148,9 @@ router.post(
 
             const sequenceResult = await client.query(
 
-                `SELECT nextval('student_id_seq') AS number`
+                `
+                SELECT nextval('student_id_seq') AS number
+                `
 
             );
 
@@ -148,6 +189,7 @@ router.post(
                     role,
                     must_change_password
                 )
+
                 VALUES
                 (
                     $1,
@@ -156,18 +198,15 @@ router.post(
                     $4,
                     $5
                 )
+
                 RETURNING id
                 `,
 
                 [
                     name.trim(),
-
                     email.trim().toLowerCase(),
-
                     hashedPassword,
-
                     "student",
-
                     true,
                 ]
 
@@ -197,8 +236,10 @@ router.post(
                     address,
                     city,
                     state,
-                    pin_code
+                    pin_code,
+                    batch
                 )
+
                 VALUES
                 (
                     $1,
@@ -211,34 +252,24 @@ router.post(
                     $8,
                     $9,
                     $10,
-                    $11
+                    $11,
+                    $12
                 )
                 `,
 
                 [
-
                     userId,
-
                     studentId,
-
                     phone || null,
-
                     course || null,
-
                     admissionDate || null,
-
                     dateOfBirth || null,
-
                     gender || null,
-
                     address || null,
-
                     city || null,
-
                     state || null,
-
                     pinCode || null,
-
+                    batch,
                 ]
 
             );
@@ -268,7 +299,8 @@ router.post(
 
                     studentId,
 
-                    name: name.trim(),
+                    name:
+                        name.trim(),
 
                     email:
                         email.trim().toLowerCase(),
@@ -276,6 +308,8 @@ router.post(
                     phone,
 
                     course,
+
+                    batch,
 
                 },
 
@@ -287,7 +321,18 @@ router.post(
 
         } catch (error) {
 
-            await client.query("ROLLBACK");
+            // ==========================================
+            // ROLLBACK
+            // ==========================================
+
+            try {
+                await client.query("ROLLBACK");
+            } catch (rollbackError) {
+                console.error(
+                    "Rollback error:",
+                    rollbackError
+                );
+            }
 
 
             console.error(
@@ -304,7 +349,6 @@ router.post(
                     "Failed to create student.",
 
             });
-
 
         } finally {
 
@@ -352,6 +396,8 @@ router.get(
 
                     sm.course,
 
+                    sm.batch,
+
                     sm.admission_date,
 
                     sm.date_of_birth,
@@ -385,7 +431,8 @@ router.get(
 
                 success: true,
 
-                students: result.rows,
+                students:
+                    result.rows,
 
             });
 
@@ -446,6 +493,8 @@ router.get(
 
                     sm.course,
 
+                    sm.batch,
+
                     sm.admission_date,
 
                     sm.date_of_birth,
@@ -491,7 +540,8 @@ router.get(
 
                 success: true,
 
-                student: result.rows[0],
+                student:
+                    result.rows[0],
 
             });
 
@@ -519,4 +569,9 @@ router.get(
 );
 
 
+// =====================================================
+// EXPORT ROUTER
+// =====================================================
+
 export default router;
+
