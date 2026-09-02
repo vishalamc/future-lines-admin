@@ -12,42 +12,62 @@ router.get("/students", async (req, res) => {
 
     try {
 
+        // ------------------------------------------
+        // CHECK LOGIN
+        // ------------------------------------------
+
         if (!req.session.user) {
+
             return res.status(401).json({
                 success: false,
                 message: "Not authenticated",
             });
+
         }
 
 
+        // ------------------------------------------
+        // ADMIN ONLY
+        // ------------------------------------------
+
         if (req.session.user.role !== "admin") {
+
             return res.status(403).json({
                 success: false,
                 message: "Admin access required",
             });
+
         }
 
 
-       const result = await pool.query(`
-    SELECT
-        sm.id,
-        sm.student_id,
-        u.name,
-        u.email,
-        sm.course,
-        '' AS batch,
-        sm.phone
+        // ------------------------------------------
+        // GET STUDENTS
+        // ------------------------------------------
 
-    FROM student_master sm
+        const result = await pool.query(`
+            SELECT
+                sm.id,
+                sm.student_id,
+                u.name,
+                u.email,
+                sm.course,
+                sm.batch,
+                sm.phone
 
-    INNER JOIN users u
-        ON sm.user_id = u.id
+            FROM student_master sm
 
-    WHERE u.role = 'student'
+            INNER JOIN users u
+                ON sm.user_id = u.id
 
-    ORDER BY sm.student_id
-`);
+            WHERE u.role = 'student'
 
+            ORDER BY sm.student_id
+        `);
+
+
+        // ------------------------------------------
+        // RESPONSE
+        // ------------------------------------------
 
         res.json({
             success: true,
@@ -59,7 +79,7 @@ router.get("/students", async (req, res) => {
 
         console.error(
             "Attendance students error:",
-            error.message
+            error
         );
 
         res.status(500).json({
@@ -80,21 +100,37 @@ router.post("/save", async (req, res) => {
 
     try {
 
+        // ------------------------------------------
+        // CHECK LOGIN
+        // ------------------------------------------
+
         if (!req.session.user) {
+
             return res.status(401).json({
                 success: false,
                 message: "Not authenticated",
             });
+
         }
 
 
+        // ------------------------------------------
+        // ADMIN ONLY
+        // ------------------------------------------
+
         if (req.session.user.role !== "admin") {
+
             return res.status(403).json({
                 success: false,
                 message: "Admin access required",
             });
+
         }
 
+
+        // ------------------------------------------
+        // GET REQUEST DATA
+        // ------------------------------------------
 
         const {
             attendance_date,
@@ -103,6 +139,10 @@ router.post("/save", async (req, res) => {
             attendance,
         } = req.body;
 
+
+        // ------------------------------------------
+        // VALIDATION
+        // ------------------------------------------
 
         if (
             !attendance_date ||
@@ -129,8 +169,11 @@ router.post("/save", async (req, res) => {
         }
 
 
-        const client =
-            await pool.connect();
+        // ------------------------------------------
+        // DATABASE TRANSACTION
+        // ------------------------------------------
+
+        const client = await pool.connect();
 
 
         try {
@@ -184,6 +227,10 @@ router.post("/save", async (req, res) => {
             await client.query("COMMIT");
 
 
+            // ------------------------------------------
+            // SUCCESS
+            // ------------------------------------------
+
             res.json({
                 success: true,
                 message: "Attendance saved successfully",
@@ -218,6 +265,7 @@ router.post("/save", async (req, res) => {
     }
 
 });
+
 
 // ==================================================
 // ATTENDANCE REPORT
@@ -284,6 +332,7 @@ router.get("/report", async (req, res) => {
                 sm.student_id AS student_code,
                 u.name,
                 sm.course,
+                sm.batch,
                 a.attendance_date,
                 a.start_time,
                 a.end_time,
@@ -319,6 +368,7 @@ router.get("/report", async (req, res) => {
             query += `
                 AND sm.course = $${values.length}
             `;
+
         }
 
 
@@ -333,6 +383,7 @@ router.get("/report", async (req, res) => {
             query += `
                 AND a.status = $${values.length}
             `;
+
         }
 
 
@@ -352,11 +403,10 @@ router.get("/report", async (req, res) => {
         // EXECUTE
         // ------------------------------------------
 
-        const result =
-            await pool.query(
-                query,
-                values
-            );
+        const result = await pool.query(
+            query,
+            values
+        );
 
 
         // ------------------------------------------
@@ -377,6 +427,9 @@ router.get("/report", async (req, res) => {
                 course:
                     row.course,
 
+                batch:
+                    row.batch,
+
                 attendance_date:
                     row.attendance_date,
 
@@ -392,6 +445,10 @@ router.get("/report", async (req, res) => {
             })
         );
 
+
+        // ------------------------------------------
+        // RESPONSE
+        // ------------------------------------------
 
         res.json({
 
@@ -422,6 +479,7 @@ router.get("/report", async (req, res) => {
     }
 
 });
+
 
 // ==================================================
 // GET MY ATTENDANCE
@@ -461,7 +519,7 @@ router.get("/my-attendance", async (req, res) => {
 
 
         // ------------------------------------------
-        // GET STUDENT RECORD
+        // GET STUDENT PROFILE
         // ------------------------------------------
 
         const studentResult = await pool.query(
@@ -469,7 +527,8 @@ router.get("/my-attendance", async (req, res) => {
             SELECT
                 id,
                 student_id,
-                course
+                course,
+                batch
             FROM student_master
             WHERE user_id = $1
             LIMIT 1
@@ -557,6 +616,12 @@ router.get("/my-attendance", async (req, res) => {
 
             success: true,
 
+            student: {
+                student_id: student.student_id,
+                course: student.course,
+                batch: student.batch,
+            },
+
             summary: {
                 totalClasses,
                 present: presentCount,
@@ -589,4 +654,10 @@ router.get("/my-attendance", async (req, res) => {
     }
 
 });
+
+
+// ==================================================
+// EXPORT ROUTER
+// ==================================================
+
 export default router;
