@@ -12,6 +12,9 @@ import AttendanceReport from "./pages/AttendanceReport";
 
 import ChangePassword from "./pages/ChangePassword";
 
+import FeesManagement from "./pages/FeesManagement";
+import StudentFeeReport from "./pages/StudentFeeReport";
+
 
 function App() {
 
@@ -57,6 +60,15 @@ function App() {
                 }
             />
 
+            <Route
+             path="/student-fee-report"
+                element={
+                <ProtectedRoute role="student">
+                    <StudentFeeReport />
+                </ProtectedRoute>
+            }
+            />
+
 
             {/* ==========================================
                 ADD STUDENT
@@ -99,6 +111,14 @@ function App() {
                 }
             />
 
+            <Route
+                path="/fees"
+                element={
+                <ProtectedRoute role="admin">
+                <FeesManagement />
+                </ProtectedRoute>
+            }
+            />
 
             {/* ==========================================
                 STUDENT DASHBOARD
@@ -148,4 +168,6 @@ function App() {
     );
 
 }
+
+
 export default App;
