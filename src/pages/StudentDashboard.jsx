@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import "./StudentDashboard.css";
-
 
 function StudentDashboard() {
 
     const navigate = useNavigate();
-
 
     // ==================================================
     // STATE
@@ -15,49 +12,70 @@ function StudentDashboard() {
 
     const [student, setStudent] = useState(null);
 
-    const [attendance, setAttendance] = useState({
+    const [attendance, setAttendance] = useState([]);
+
+    const [attendanceSummary, setAttendanceSummary] = useState({
         totalClasses: 0,
         present: 0,
         absent: 0,
         percentage: "0.0",
     });
 
-    const [attendanceRecords, setAttendanceRecords] = useState([]);
+    const [fees, setFees] = useState(null);
 
     const [loading, setLoading] = useState(true);
 
-    const [attendanceLoading, setAttendanceLoading] = useState(true);
-
     const [error, setError] = useState("");
 
-    const [attendanceError, setAttendanceError] = useState("");
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+    });
+
+    const [passwordMessage, setPasswordMessage] = useState("");
+
+    const [passwordError, setPasswordError] = useState("");
+
+    const [changingPassword, setChangingPassword] = useState(false);
 
 
     // ==================================================
-    // LOAD DASHBOARD DATA
+    // SAFE JSON RESPONSE
     // ==================================================
 
-    useEffect(() => {
+    const getJsonResponse = async (response) => {
 
-        loadStudentProfile();
+        const contentType =
+            response.headers.get("content-type") || "";
 
-        loadMyAttendance();
+        if (!contentType.includes("application/json")) {
 
-    }, []);
+            const text = await response.text();
+
+            console.error(
+                "Expected JSON but received:",
+                text.substring(0, 300)
+            );
+
+            throw new Error(
+                "Server returned an invalid response."
+            );
+        }
+
+        return response.json();
+    };
 
 
     // ==================================================
     // LOAD STUDENT PROFILE
     // ==================================================
 
-    const loadStudentProfile = async () => {
+    const loadProfile = async () => {
 
         try {
-
-            setLoading(true);
-
-            setError("");
-
 
             const response = await fetch(
                 "/api/students/my-profile",
@@ -66,28 +84,7 @@ function StudentDashboard() {
                 }
             );
 
-
-            if (response.status === 401) {
-
-                navigate("/login");
-
-                return;
-
-            }
-
-
-            if (response.status === 403) {
-
-                navigate("/login");
-
-                return;
-
-            }
-
-
-            const data =
-                await response.json();
-
+            const data = await getJsonResponse(response);
 
             if (!response.ok) {
 
@@ -95,15 +92,11 @@ function StudentDashboard() {
                     data.message ||
                     "Unable to load student profile."
                 );
-
             }
-
 
             if (data.success) {
 
-                setStudent(
-                    data.student
-                );
+                setStudent(data.student);
 
             } else {
 
@@ -111,45 +104,27 @@ function StudentDashboard() {
                     data.message ||
                     "Unable to load student profile."
                 );
-
             }
 
-
-        } catch (error) {
+        } catch (err) {
 
             console.error(
                 "Student profile error:",
-                error
+                err
             );
 
-
-            setError(
-                error.message ||
-                "Unable to load student information."
-            );
-
-
-        } finally {
-
-            setLoading(false);
-
+            setError(err.message);
         }
-
     };
 
 
     // ==================================================
-    // LOAD MY ATTENDANCE
+    // LOAD ATTENDANCE
     // ==================================================
 
-    const loadMyAttendance = async () => {
+    const loadAttendance = async () => {
 
         try {
-
-            setAttendanceLoading(true);
-
-            setAttendanceError("");
-
 
             const response = await fetch(
                 "/api/attendance/my-attendance",
@@ -158,28 +133,7 @@ function StudentDashboard() {
                 }
             );
 
-
-            if (response.status === 401) {
-
-                navigate("/login");
-
-                return;
-
-            }
-
-
-            if (response.status === 403) {
-
-                navigate("/login");
-
-                return;
-
-            }
-
-
-            const data =
-                await response.json();
-
+            const data = await getJsonResponse(response);
 
             if (!response.ok) {
 
@@ -187,57 +141,150 @@ function StudentDashboard() {
                     data.message ||
                     "Unable to load attendance."
                 );
-
             }
-
 
             if (data.success) {
 
+                // IMPORTANT:
+                // Backend returns "records", not "attendance"
+
                 setAttendance(
-                    data.summary || {
-                        totalClasses: 0,
-                        present: 0,
-                        absent: 0,
-                        percentage: "0.0",
-                    }
+                    Array.isArray(data.records)
+                        ? data.records
+                        : []
                 );
 
 
-                setAttendanceRecords(
-                    data.records || []
-                );
+                // Use backend-calculated summary
+
+                if (data.summary) {
+
+                    setAttendanceSummary({
+                        totalClasses:
+                            Number(
+                                data.summary.totalClasses
+                            ) || 0,
+
+                        present:
+                            Number(
+                                data.summary.present
+                            ) || 0,
+
+                        absent:
+                            Number(
+                                data.summary.absent
+                            ) || 0,
+
+                        percentage:
+                            data.summary.percentage !==
+                            undefined
+                                ? data.summary.percentage
+                                : "0.0",
+                    });
+                }
 
             } else {
 
-                throw new Error(
-                    data.message ||
-                    "Unable to load attendance."
-                );
+                setAttendance([]);
 
+                setAttendanceSummary({
+                    totalClasses: 0,
+                    present: 0,
+                    absent: 0,
+                    percentage: "0.0",
+                });
             }
 
-
-        } catch (error) {
+        } catch (err) {
 
             console.error(
-                "Attendance loading error:",
-                error
+                "Student attendance error:",
+                err
             );
 
+            setAttendance([]);
 
-            setAttendanceError(
-                error.message ||
-                "Unable to load attendance."
-            );
-
-
-        } finally {
-
-            setAttendanceLoading(false);
+            setAttendanceSummary({
+                totalClasses: 0,
+                present: 0,
+                absent: 0,
+                percentage: "0.0",
+            });
 
         }
-
     };
+
+
+    // ==================================================
+    // LOAD FEES
+    // ==================================================
+
+    const loadFees = async () => {
+
+        try {
+
+            const response = await fetch(
+                "/api/fees/my-fees",
+                {
+                    credentials: "include",
+                }
+            );
+
+            const data = await getJsonResponse(response);
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to load fees."
+                );
+            }
+
+            if (data.success) {
+
+                setFees(data);
+
+            } else {
+
+                setFees(null);
+            }
+
+        } catch (err) {
+
+            console.error(
+                "Student fees error:",
+                err
+            );
+
+            setFees(null);
+        }
+    };
+
+
+    // ==================================================
+    // LOAD ALL DASHBOARD DATA
+    // ==================================================
+
+    useEffect(() => {
+
+        const loadDashboard = async () => {
+
+            setLoading(true);
+
+            setError("");
+
+            await Promise.all([
+                loadProfile(),
+                loadAttendance(),
+                loadFees(),
+            ]);
+
+            setLoading(false);
+        };
+
+        loadDashboard();
+
+    }, []);
 
 
     // ==================================================
@@ -256,52 +303,187 @@ function StudentDashboard() {
                 }
             );
 
-
-            navigate(
-                "/login",
-                {
-                    replace: true,
-                }
-            );
-
-
-        } catch (error) {
+        } catch (err) {
 
             console.error(
                 "Logout error:",
-                error
+                err
             );
 
+        } finally {
 
-            navigate(
-                "/login",
-                {
-                    replace: true,
-                }
-            );
-
+            navigate("/login");
         }
-
     };
 
 
     // ==================================================
-    // INITIAL
+    // NAVIGATION
     // ==================================================
 
-    const getInitial = () => {
+    const scrollToSection = (sectionId) => {
 
-        if (!student?.name) {
+        setMobileMenuOpen(false);
 
-            return "S";
+        const element =
+            document.getElementById(sectionId);
 
+        if (element) {
+
+            element.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        }
+    };
+
+
+    // ==================================================
+    // CHANGE PASSWORD INPUT
+    // ==================================================
+
+    const handlePasswordChange = (e) => {
+
+        const { name, value } = e.target;
+
+        setPasswordData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+
+        setPasswordError("");
+
+        setPasswordMessage("");
+    };
+
+
+    // ==================================================
+    // CHANGE PASSWORD
+    // ==================================================
+
+    const handleChangePassword = async (e) => {
+
+        e.preventDefault();
+
+        setPasswordError("");
+
+        setPasswordMessage("");
+
+
+        const {
+            currentPassword,
+            newPassword,
+            confirmPassword,
+        } = passwordData;
+
+
+        if (
+            !currentPassword ||
+            !newPassword ||
+            !confirmPassword
+        ) {
+
+            setPasswordError(
+                "Please fill all password fields."
+            );
+
+            return;
         }
 
 
-        return student.name
-            .charAt(0)
-            .toUpperCase();
+        if (newPassword.length < 6) {
 
+            setPasswordError(
+                "New password must be at least 6 characters."
+            );
+
+            return;
+        }
+
+
+        if (newPassword !== confirmPassword) {
+
+            setPasswordError(
+                "New password and confirm password do not match."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            setChangingPassword(true);
+
+            const response = await fetch(
+                "/api/auth/change-password",
+                {
+                    method: "POST",
+
+                    credentials: "include",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
+
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword,
+                    }),
+                }
+            );
+
+
+            const data =
+                await getJsonResponse(response);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to change password."
+                );
+            }
+
+
+            if (!data.success) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to change password."
+                );
+            }
+
+
+            setPasswordMessage(
+                "Password changed successfully."
+            );
+
+
+            setPasswordData({
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
+            });
+
+
+        } catch (err) {
+
+            console.error(
+                "Change password error:",
+                err
+            );
+
+            setPasswordError(
+                err.message
+            );
+
+        } finally {
+
+            setChangingPassword(false);
+        }
     };
 
 
@@ -309,63 +491,138 @@ function StudentDashboard() {
     // FORMAT DATE
     // ==================================================
 
-    const formatDate = (dateValue) => {
+    const formatDate = (date) => {
 
-        if (!dateValue) {
-
+        if (!date) {
             return "-";
-
         }
-
 
         try {
 
-            return new Date(
-                dateValue
-            ).toLocaleDateString(
-                "en-IN"
+            return new Date(date).toLocaleDateString(
+                "en-IN",
+                {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                }
             );
 
         } catch {
 
-            return dateValue;
-
+            return date;
         }
-
     };
 
 
     // ==================================================
-    // FORMAT TIME
+    // FORMAT CURRENCY
     // ==================================================
 
-    const formatTime = (timeValue) => {
+    const formatCurrency = (amount) => {
 
-        if (!timeValue) {
+        const value =
+            Number(amount) || 0;
 
-            return "-";
-
-        }
-
-
-        return String(
-            timeValue
-        ).slice(0, 5);
-
+        return `₹${value.toLocaleString("en-IN", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        })}`;
     };
 
+    // ==================================================
+// GET FEE SUMMARY
+// ==================================================
+
+const feeSummary = fees?.summary || {};
+
+
+// --------------------------------------------------
+// TOTAL FEE
+// --------------------------------------------------
+
+const totalFee =
+    Number(feeSummary.total_fee) || 0;
+
+
+// --------------------------------------------------
+// DISCOUNT
+// --------------------------------------------------
+
+const discount =
+    Number(feeSummary.discount) || 0;
+
+
+// --------------------------------------------------
+// NET FEE
+// Always calculate from Total Fee - Discount
+// --------------------------------------------------
+
+const calculatedNetFee =
+    Math.max(totalFee - discount, 0);
+
+const netFee =
+    Number.isFinite(Number(feeSummary.net_fee))
+        ? Number(feeSummary.net_fee)
+        : calculatedNetFee;
+
+
+// --------------------------------------------------
+// TOTAL PAID
+// --------------------------------------------------
+
+const totalPaid =
+    Number(feeSummary.total_paid) || 0;
+
+
+// --------------------------------------------------
+// PENDING
+// IMPORTANT:
+// Do NOT trust backend pending value.
+// Calculate it from Net Fee - Total Paid.
+// --------------------------------------------------
+
+const pending =
+    Math.max(netFee - totalPaid, 0);
+
+
+// --------------------------------------------------
+// PAYMENT STATUS
+// --------------------------------------------------
+
+const feeStatus =
+    pending <= 0
+        ? "Paid"
+        : "Pending";
+
+   
+    // ==================================================
+    // PAYMENT HISTORY
+    // ==================================================
+
+    const paymentHistory =
+        Array.isArray(
+            fees?.records
+        )
+            ? fees.records
+            : Array.isArray(
+                fees?.transactions
+            )
+                ? fees.transactions
+                : [];
+
 
     // ==================================================
-    // LOADING
+    // LOADING SCREEN
     // ==================================================
 
     if (loading) {
 
         return (
 
-            <div className="student-loading">
+            <div className="student-dashboard-loading">
 
-                <div className="student-loader"></div>
+                <div className="student-loading-spinner"></div>
 
                 <p>
                     Loading your dashboard...
@@ -374,54 +631,11 @@ function StudentDashboard() {
             </div>
 
         );
-
     }
 
 
     // ==================================================
-    // ERROR
-    // ==================================================
-
-    if (error) {
-
-        return (
-
-            <div className="student-error-page">
-
-                <div className="student-error-box">
-
-                    <div className="student-error-icon">
-                        !
-                    </div>
-
-
-                    <h2>
-                        Unable to Load Dashboard
-                    </h2>
-
-
-                    <p>
-                        {error}
-                    </p>
-
-
-                    <button
-                        onClick={loadStudentProfile}
-                    >
-                        Try Again
-                    </button>
-
-                </div>
-
-            </div>
-
-        );
-
-    }
-
-
-    // ==================================================
-    // RETURN
+    // MAIN DASHBOARD
     // ==================================================
 
     return (
@@ -430,265 +644,260 @@ function StudentDashboard() {
 
 
             {/* ==================================================
+                MOBILE OVERLAY
+            ================================================== */}
+
+            {mobileMenuOpen && (
+
+                <div
+                    className="student-sidebar-overlay"
+                    onClick={() =>
+                        setMobileMenuOpen(false)
+                    }
+                ></div>
+
+            )}
+
+
+            {/* ==================================================
                 SIDEBAR
             ================================================== */}
 
-            <aside className="student-sidebar">
+            <aside
+                className={`student-sidebar ${
+                    mobileMenuOpen
+                        ? "mobile-open"
+                        : ""
+                }`}
+            >
 
+                <div className="student-sidebar-header">
 
-                {/* BRAND */}
+                    <div className="student-logo">
 
-                <div className="student-sidebar-brand">
+                        <div className="student-logo-icon">
+                            FL
+                        </div>
 
-                    <div className="student-sidebar-logo">
-                        FL
+                        <div>
+
+                            <h2>
+                                Future Lines
+                            </h2>
+
+                            <span>
+                                Student Portal
+                            </span>
+
+                        </div>
+
                     </div>
 
 
-                    <div>
-
-                        <h2>
-                            Future Lines
-                        </h2>
-
-                        <span>
-                            Student Portal
-                        </span>
-
-                    </div>
+                    <button
+                        className="student-sidebar-close"
+                        onClick={() =>
+                            setMobileMenuOpen(false)
+                        }
+                    >
+                        ×
+                    </button>
 
                 </div>
 
 
                 {/* NAVIGATION */}
 
-                <nav className="student-nav">
+                <nav className="student-sidebar-nav">
 
-
-                    {/* DASHBOARD */}
-
-                    <a
-                        href="#dashboard"
-                        className="student-nav-link active"
+                    <button
+                        className="student-nav-item active"
+                        onClick={() =>
+                            scrollToSection("dashboard")
+                        }
                     >
-
-                        <span className="nav-icon">
+                        <span className="student-nav-icon">
                             🏠
                         </span>
 
-                        Dashboard
+                        <span>
+                            Dashboard
+                        </span>
+                    </button>
 
-                    </a>
 
-
-                    {/* PROFILE */}
-
-                    <a
-                        href="#profile"
-                        className="student-nav-link"
+                    <button
+                        className="student-nav-item"
+                        onClick={() =>
+                            scrollToSection("profile")
+                        }
                     >
-
-                        <span className="nav-icon">
+                        <span className="student-nav-icon">
                             👤
                         </span>
 
-                        My Profile
+                        <span>
+                            My Profile
+                        </span>
+                    </button>
 
-                    </a>
 
-
-                    {/* WEEKLY TESTS */}
-
-                    <a
-                        href="#tests"
-                        className="student-nav-link"
+                    <button
+                        className="student-nav-item"
+                        onClick={() =>
+                            scrollToSection("tests")
+                        }
                     >
-
-                        <span className="nav-icon">
+                        <span className="student-nav-icon">
                             📝
                         </span>
 
-                        Weekly Tests
+                        <span>
+                            Weekly Tests
+                        </span>
+                    </button>
 
-                    </a>
 
-
-                    {/* ATTENDANCE */}
-
-                    <a
-                        href="#attendance"
-                        className="student-nav-link"
+                    <button
+                        className="student-nav-item"
+                        onClick={() =>
+                            scrollToSection("attendance")
+                        }
                     >
-
-                        <span className="nav-icon">
+                        <span className="student-nav-icon">
                             📅
                         </span>
 
-                        Attendance
+                        <span>
+                            Attendance
+                        </span>
+                    </button>
 
-                    </a>
 
-
-                    {/* CHANGE PASSWORD */}
-
-                    <a
-                        href="#password"
-                        className="student-nav-link"
+                    <button
+                        className="student-nav-item"
+                        onClick={() =>
+                            scrollToSection("fees")
+                        }
                     >
+                        <span className="student-nav-icon">
+                            💰
+                        </span>
 
-                        <span className="nav-icon">
+                        <span>
+                            My Fees
+                        </span>
+                    </button>
+
+
+                    <button
+                        className="student-nav-item"
+                        onClick={() =>
+                            scrollToSection("password")
+                        }
+                    >
+                        <span className="student-nav-icon">
                             🔐
                         </span>
 
-                        Change Password
-
-                    </a>
-
+                        <span>
+                            Change Password
+                        </span>
+                    </button>
 
                 </nav>
 
 
                 {/* LOGOUT */}
 
-                <button
-                    className="student-logout"
-                    onClick={handleLogout}
-                >
+                <div className="student-sidebar-footer">
 
-                    <span>
-                        ↪
-                    </span>
+                    <button
+                        className="student-logout-btn"
+                        onClick={handleLogout}
+                    >
 
-                    Logout
+                        <span>
+                            🚪
+                        </span>
 
-                </button>
+                        <span>
+                            Logout
+                        </span>
 
+                    </button>
+
+                </div>
 
             </aside>
 
 
-{/* ==================================================
-    MOBILE LOGOUT
-================================================== */}
+            {/* ==================================================
+                MAIN CONTENT
+            ================================================== */}
 
-<button
-    className="student-mobile-logout"
-    onClick={handleLogout}
->
-    <span>↪</span>
-    Logout
-</button>
-
-
-{/* ==================================================
-    MAIN CONTENT
-================================================== */}
-
-<main className="student-main">
+            <main className="student-main-content">
 
 
                 {/* ==================================================
-                    HEADER
+                    TOP HEADER
                 ================================================== */}
 
-                <header className="student-header">
+                <header className="student-top-header">
 
+                    <div className="student-header-left">
 
-                    <div>
-
-                        <h1>
-                            Student Dashboard
-                        </h1>
-
-                        <p>
-
-                            Welcome back,{" "}
-
-                            <strong>
-                                {student?.name}
-                            </strong>
-
-                        </p>
-
-                    </div>
-
-
-                    <div className="student-header-profile">
-
-
-                        <div className="student-avatar">
-
-                            {getInitial()}
-
-                        </div>
+                        <button
+                            className="student-mobile-menu-btn"
+                            onClick={() =>
+                                setMobileMenuOpen(true)
+                            }
+                        >
+                            ☰
+                        </button>
 
 
                         <div>
 
-                            <strong>
-                                {student?.name}
-                            </strong>
+                            <h1>
+                                Student Dashboard
+                            </h1>
 
-                            <span>
-                                {student?.student_id}
-                            </span>
+                            <p>
+                                Welcome back! Here's your
+                                learning overview.
+                            </p>
 
                         </div>
-
 
                     </div>
 
 
-                </header>
+                    <div className="student-header-right">
 
+                        <div className="student-header-profile">
 
-                {/* ==================================================
-                    CONTENT
-                ================================================== */}
+                            <div className="student-avatar">
 
-                <section className="student-content">
-
-
-                    {/* ==================================================
-                        PROFILE HERO
-                    ================================================== */}
-
-                    <div className="student-profile-card">
-
-
-                        <div className="profile-main">
-
-
-                            <div className="large-student-avatar">
-
-                                {getInitial()}
+                                {student?.name
+                                    ? student.name
+                                        .charAt(0)
+                                        .toUpperCase()
+                                    : "S"}
 
                             </div>
 
 
-                            <div className="profile-main-info">
+                            <div className="student-header-user">
 
-                                <h2>
-                                    {student?.name}
-                                </h2>
+                                <strong>
+                                    {student?.name ||
+                                        "Student"}
+                                </strong>
 
-
-                                <p>
-
-                                    Student ID:{" "}
-
-                                    <strong>
-                                        {student?.student_id}
-                                    </strong>
-
-                                </p>
-
-
-                                <span className="course-badge">
-
-                                    {student?.course ||
-                                        "Course Not Assigned"}
-
+                                <span>
+                                    {student?.student_id ||
+                                        "Student"}
                                 </span>
 
                             </div>
@@ -696,22 +905,87 @@ function StudentDashboard() {
                         </div>
 
 
-                        <div className="profile-status">
+                        <button
+                            className="student-header-logout"
+                            onClick={handleLogout}
+                        >
+                            Logout
+                        </button>
 
-                            <span className="status-dot"></span>
+                    </div>
 
-                            Active Student
+                </header>
+
+
+                {/* ==================================================
+                    ERROR
+                ================================================== */}
+
+                {error && (
+
+                    <div className="student-error-message">
+
+                        ⚠️ {error}
+
+                    </div>
+
+                )}
+
+
+                {/* ==================================================
+                    DASHBOARD
+                ================================================== */}
+
+                <section
+                    id="dashboard"
+                    className="student-section"
+                >
+
+                    <div className="student-welcome-card">
+
+                        <div>
+
+                            <span className="student-welcome-label">
+                                Welcome back
+                            </span>
+
+                            <h2>
+                                {student?.name ||
+                                    "Student"}
+                            </h2>
+
+                            <p>
+
+                                {student?.course ||
+                                    "Course"}
+
+                                {student?.batch &&
+                                    ` • ${student.batch} Batch`}
+
+                            </p>
+
+                        </div>
+
+
+                        <div className="student-welcome-id">
+
+                            <span>
+                                Student ID
+                            </span>
+
+                            <strong>
+                                {student?.student_id ||
+                                    "-"}
+                            </strong>
 
                         </div>
 
                     </div>
 
 
-                    {/* ==================================================
-                        STAT CARDS
-                    ================================================== */}
+                    {/* STAT CARDS */}
 
-                    <div className="student-stat-grid">
+                    <div className="student-stats-grid">
 
 
                         {/* COURSE */}
@@ -719,21 +993,19 @@ function StudentDashboard() {
                         <div className="student-stat-card">
 
                             <div className="student-stat-icon">
-                                📚
+                                🎓
                             </div>
-
 
                             <div>
 
-                                <span>
-                                    Current Course
+                                <span className="student-stat-label">
+                                    My Course
                                 </span>
 
-
-                                <h3>
+                                <strong className="student-stat-value">
                                     {student?.course ||
-                                        "Not Assigned"}
-                                </h3>
+                                        "-"}
+                                </strong>
 
                             </div>
 
@@ -748,42 +1020,15 @@ function StudentDashboard() {
                                 📝
                             </div>
 
-
                             <div>
 
-                                <span>
+                                <span className="student-stat-label">
                                     Weekly Tests
                                 </span>
 
-
-                                <h3>
+                                <strong className="student-stat-value">
                                     0
-                                </h3>
-
-                            </div>
-
-                        </div>
-
-
-                        {/* TEST AVERAGE */}
-
-                        <div className="student-stat-card">
-
-                            <div className="student-stat-icon">
-                                📊
-                            </div>
-
-
-                            <div>
-
-                                <span>
-                                    Test Average
-                                </span>
-
-
-                                <h3>
-                                    0%
-                                </h3>
+                                </strong>
 
                             </div>
 
@@ -798,82 +1043,106 @@ function StudentDashboard() {
                                 📅
                             </div>
 
-
                             <div>
 
-                                <span>
+                                <span className="student-stat-label">
                                     Attendance
                                 </span>
 
+                                <strong className="student-stat-value">
+                                    {attendanceSummary.percentage}%
+                                </strong>
 
-                                <h3>
-
-                                    {attendanceLoading
-                                        ? "..."
-                                        : `${attendance.percentage}%`}
-
-                                </h3>
+                                <small>
+                                    {
+                                        attendanceSummary.present
+                                    } Present /{" "}
+                                    {
+                                        attendanceSummary.totalClasses
+                                    } Classes
+                                </small>
 
                             </div>
 
                         </div>
 
 
-                    </div>
+                        {/* PENDING FEE */}
 
+                        <div className="student-stat-card">
 
-                    {/* ==================================================
-                        PROFILE
-                    ================================================== */}
-
-                    <div
-                        id="profile"
-                        className="student-section"
-                    >
-
-
-                        <div className="student-section-header">
+                            <div className="student-stat-icon">
+                                💰
+                            </div>
 
                             <div>
 
-                                <h2>
-                                    My Profile
-                                </h2>
-
-
-                                <p>
-                                    Your registered information
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <div className="profile-grid">
-
-
-                            <div className="profile-item">
-
-                                <span>
-                                    Student ID
+                                <span className="student-stat-label">
+                                    Fee Pending
                                 </span>
 
-
-                                <strong>
-                                    {student?.student_id ||
-                                        "-"}
+                                <strong className="student-stat-value">
+                                    {formatCurrency(
+                                        pending
+                                    )}
                                 </strong>
 
                             </div>
 
+                        </div>
 
-                            <div className="profile-item">
+                    </div>
+
+                </section>
+
+
+                {/* ==================================================
+                    PROFILE
+                ================================================== */}
+
+                <section
+                    id="profile"
+                    className="student-section"
+                >
+
+                    <div className="student-section-header">
+
+                        <div>
+
+                            <h2>
+                                My Profile
+                            </h2>
+
+                            <p>
+                                Your registered student
+                                information
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="student-profile-card">
+
+                        <div className="student-profile-avatar">
+
+                            {student?.name
+                                ? student.name
+                                    .charAt(0)
+                                    .toUpperCase()
+                                : "S"}
+
+                        </div>
+
+
+                        <div className="student-profile-details">
+
+                            <div className="student-profile-field">
 
                                 <span>
                                     Full Name
                                 </span>
-
 
                                 <strong>
                                     {student?.name ||
@@ -883,12 +1152,25 @@ function StudentDashboard() {
                             </div>
 
 
-                            <div className="profile-item">
+                            <div className="student-profile-field">
+
+                                <span>
+                                    Student ID
+                                </span>
+
+                                <strong>
+                                    {student?.student_id ||
+                                        "-"}
+                                </strong>
+
+                            </div>
+
+
+                            <div className="student-profile-field">
 
                                 <span>
                                     Email
                                 </span>
-
 
                                 <strong>
                                     {student?.email ||
@@ -898,12 +1180,11 @@ function StudentDashboard() {
                             </div>
 
 
-                            <div className="profile-item">
+                            <div className="student-profile-field">
 
                                 <span>
                                     Phone
                                 </span>
-
 
                                 <strong>
                                     {student?.phone ||
@@ -913,12 +1194,11 @@ function StudentDashboard() {
                             </div>
 
 
-                            <div className="profile-item">
+                            <div className="student-profile-field">
 
                                 <span>
                                     Course
                                 </span>
-
 
                                 <strong>
                                     {student?.course ||
@@ -928,12 +1208,40 @@ function StudentDashboard() {
                             </div>
 
 
-                            <div className="profile-item">
+                            <div className="student-profile-field">
+
+                                <span>
+                                    Batch
+                                </span>
+
+                                <strong>
+                                    {student?.batch ||
+                                        "-"}
+                                </strong>
+
+                            </div>
+
+
+                            <div className="student-profile-field">
+
+                                <span>
+                                    Admission Date
+                                </span>
+
+                                <strong>
+                                    {formatDate(
+                                        student?.admission_date
+                                    )}
+                                </strong>
+
+                            </div>
+
+
+                            <div className="student-profile-field">
 
                                 <span>
                                     Gender
                                 </span>
-
 
                                 <strong>
                                     {student?.gender ||
@@ -943,56 +1251,11 @@ function StudentDashboard() {
                             </div>
 
 
-                            <div className="profile-item">
-
-                                <span>
-                                    Date of Birth
-                                </span>
-
-
-                                <strong>
-
-                                    {student?.date_of_birth
-                                        ? new Date(
-                                            student.date_of_birth
-                                        ).toLocaleDateString(
-                                            "en-IN"
-                                        )
-                                        : "-"}
-
-                                </strong>
-
-                            </div>
-
-
-                            <div className="profile-item">
-
-                                <span>
-                                    Admission Date
-                                </span>
-
-
-                                <strong>
-
-                                    {student?.admission_date
-                                        ? new Date(
-                                            student.admission_date
-                                        ).toLocaleDateString(
-                                            "en-IN"
-                                        )
-                                        : "-"}
-
-                                </strong>
-
-                            </div>
-
-
-                            <div className="profile-item profile-full">
+                            <div className="student-profile-field student-profile-full">
 
                                 <span>
                                     Address
                                 </span>
-
 
                                 <strong>
                                     {student?.address ||
@@ -1001,509 +1264,731 @@ function StudentDashboard() {
 
                             </div>
 
-
-                            <div className="profile-item">
-
-                                <span>
-                                    City
-                                </span>
-
-
-                                <strong>
-                                    {student?.city ||
-                                        "-"}
-                                </strong>
-
-                            </div>
-
-
-                            <div className="profile-item">
-
-                                <span>
-                                    State
-                                </span>
-
-
-                                <strong>
-                                    {student?.state ||
-                                        "-"}
-                                </strong>
-
-                            </div>
-
-
-                            <div className="profile-item">
-
-                                <span>
-                                    PIN Code
-                                </span>
-
-
-                                <strong>
-                                    {student?.pin_code ||
-                                        "-"}
-                                </strong>
-
-                            </div>
-
-
                         </div>
 
                     </div>
 
-
-                    {/* ==================================================
-                        WEEKLY TESTS
-                    ================================================== */}
-
-                    <div
-                        id="tests"
-                        className="student-section"
-                    >
+                </section>
 
 
-                        <div className="student-section-header">
+                {/* ==================================================
+                    WEEKLY TESTS
+                ================================================== */}
 
-                            <div>
+                <section
+                    id="tests"
+                    className="student-section"
+                >
 
-                                <h2>
-                                    Weekly Tests
-                                </h2>
+                    <div className="student-section-header">
 
+                        <div>
 
-                                <p>
-                                    Your latest test performance
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <div className="empty-student-data">
-
-                            <div className="empty-data-icon">
-                                📝
-                            </div>
-
-
-                            <h3>
-                                No Tests Available
-                            </h3>
-
+                            <h2>
+                                Weekly Tests
+                            </h2>
 
                             <p>
-
-                                Your weekly test results
-                                will appear here once
-                                tests are added.
-
+                                View your weekly test
+                                performance
                             </p>
 
                         </div>
 
+                    </div>
+
+
+                    <div className="student-empty-card">
+
+                        <div className="student-empty-icon">
+                            📝
+                        </div>
+
+                        <h3>
+                            No Test Results Yet
+                        </h3>
+
+                        <p>
+                            Your weekly test marks will
+                            appear here once they are
+                            uploaded by the institute.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+                {/* ==================================================
+                    ATTENDANCE
+                ================================================== */}
+
+                <section
+                    id="attendance"
+                    className="student-section"
+                >
+
+                    <div className="student-section-header">
+
+                        <div>
+
+                            <h2>
+                                Attendance Report
+                            </h2>
+
+                            <p>
+                                Track your class attendance
+                                and attendance percentage
+                            </p>
+
+                        </div>
 
                     </div>
 
 
-                    {/* ==================================================
-                        ATTENDANCE
-                    ================================================== */}
+                    {/* ATTENDANCE SUMMARY */}
 
-                    <div
-                        id="attendance"
-                        className="student-section"
-                    >
+                    <div className="attendance-summary-grid">
 
 
-                        <div className="student-section-header">
+                        <div className="attendance-summary-card">
 
-                            <div>
+                            <span>
+                                Total Classes
+                            </span>
 
-                                <h2>
-                                    Attendance
-                                </h2>
-
-
-                                <p>
-                                    Your complete attendance record
-                                </p>
-
-                            </div>
+                            <strong>
+                                {
+                                    attendanceSummary.totalClasses
+                                }
+                            </strong>
 
                         </div>
 
 
-                        {/* ATTENDANCE ERROR */}
+                        <div className="attendance-summary-card">
 
-                        {attendanceError && (
+                            <span>
+                                Present
+                            </span>
 
-                            <div className="attendance-error-message">
+                            <strong>
+                                {
+                                    attendanceSummary.present
+                                }
+                            </strong>
 
-                                <span>
-                                    {attendanceError}
-                                </span>
+                        </div>
 
 
-                                <button
-                                    onClick={
-                                        loadMyAttendance
-                                    }
-                                >
-                                    Try Again
-                                </button>
+                        <div className="attendance-summary-card">
 
-                            </div>
+                            <span>
+                                Absent
+                            </span>
 
-                        )}
+                            <strong>
+                                {
+                                    attendanceSummary.absent
+                                }
+                            </strong>
 
+                        </div>
 
-                        {/* ATTENDANCE LOADING */}
 
-                        {attendanceLoading ? (
+                        <div className="attendance-summary-card">
 
-                            <div className="attendance-loading-box">
+                            <span>
+                                Attendance
+                            </span>
 
-                                <div className="student-loader"></div>
+                            <strong>
+                                {
+                                    attendanceSummary.percentage
+                                }%
+                            </strong>
 
-
-                                <p>
-                                    Loading attendance...
-                                </p>
-
-                            </div>
-
-                        ) : (
-
-                            <>
-
-                                {/* ======================================
-                                    ATTENDANCE SUMMARY
-                                ====================================== */}
-
-                                <div className="attendance-placeholder">
-
-
-                                    {/* CIRCLE */}
-
-                                    <div className="attendance-circle">
-
-                                        <span>
-                                            {attendance.percentage}%
-                                        </span>
-
-
-                                        <small>
-                                            Attendance
-                                        </small>
-
-                                    </div>
-
-
-                                    {/* COUNTS */}
-
-                                    <div className="attendance-info">
-
-
-                                        <div>
-
-                                            <span>
-                                                Present
-                                            </span>
-
-
-                                            <strong className="attendance-present">
-                                                {attendance.present}
-                                            </strong>
-
-                                        </div>
-
-
-                                        <div>
-
-                                            <span>
-                                                Absent
-                                            </span>
-
-
-                                            <strong className="attendance-absent">
-                                                {attendance.absent}
-                                            </strong>
-
-                                        </div>
-
-
-                                        <div>
-
-                                            <span>
-                                                Total Classes
-                                            </span>
-
-
-                                            <strong>
-                                                {attendance.totalClasses}
-                                            </strong>
-
-                                        </div>
-
-
-                                    </div>
-
-
-                                </div>
-
-
-                                {/* ======================================
-                                    ATTENDANCE HISTORY
-                                ====================================== */}
-
-                                <div className="attendance-history">
-
-
-                                    <div className="attendance-history-header">
-
-                                        <div>
-
-                                            <h3>
-                                                Attendance History
-                                            </h3>
-
-
-                                            <p>
-                                                Your latest attendance records
-                                            </p>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    {attendanceRecords.length === 0 ? (
-
-                                        <div className="empty-student-data">
-
-                                            <div className="empty-data-icon">
-                                                📅
-                                            </div>
-
-
-                                            <h3>
-                                                No Attendance Records
-                                            </h3>
-
-
-                                            <p>
-
-                                                Your attendance records will
-                                                appear here once attendance is
-                                                marked.
-
-                                            </p>
-
-                                        </div>
-
-                                    ) : (
-
-                                        <div className="student-attendance-table-wrapper">
-
-
-                                            <table className="student-attendance-table">
-
-
-                                                <thead>
-
-                                                    <tr>
-
-                                                        <th>
-                                                            #
-                                                        </th>
-
-
-                                                        <th>
-                                                            Date
-                                                        </th>
-
-
-                                                        <th>
-                                                            Class Time
-                                                        </th>
-
-
-                                                        <th>
-                                                            Status
-                                                        </th>
-
-                                                    </tr>
-
-                                                </thead>
-
-
-                                                <tbody>
-
-                                                    {attendanceRecords.map(
-                                                        (
-                                                            record,
-                                                            index
-                                                        ) => (
-
-                                                            <tr
-                                                                key={
-                                                                    record.id
-                                                                }
-                                                            >
-
-                                                                <td>
-                                                                    {index + 1}
-                                                                </td>
-
-
-                                                                <td>
-
-                                                                    {formatDate(
-                                                                        record.attendance_date
-                                                                    )}
-
-                                                                </td>
-
-
-                                                                <td>
-
-                                                                    {formatTime(
-                                                                        record.start_time
-                                                                    )}
-
-                                                                    {" - "}
-
-                                                                    {formatTime(
-                                                                        record.end_time
-                                                                    )}
-
-                                                                </td>
-
-
-                                                                <td>
-
-                                                                    {String(
-                                                                        record.status
-                                                                    ).toLowerCase() ===
-                                                                    "present" ? (
-
-                                                                        <span className="student-present-badge">
-                                                                            ✓ Present
-                                                                        </span>
-
-                                                                    ) : (
-
-                                                                        <span className="student-absent-badge">
-                                                                            ✕ Absent
-                                                                        </span>
-
-                                                                    )}
-
-                                                                </td>
-
-                                                            </tr>
-
-                                                        )
-                                                    )}
-
-                                                </tbody>
-
-
-                                            </table>
-
-                                        </div>
-
-                                    )}
-
-                                </div>
-
-                            </>
-
-                        )}
+                        </div>
 
                     </div>
 
 
-                    {/* ==================================================
-                        CHANGE PASSWORD
-                    ================================================== */}
+                    {/* ATTENDANCE HISTORY */}
 
-                    <div
-                        id="password"
-                        className="student-section password-section"
-                    >
+                    <div className="student-table-card">
 
-
-                        <div className="student-section-header">
-
-                            <div>
-
-                                <h2>
-                                    Account Security
-                                </h2>
-
-
-                                <p>
-                                    Keep your account secure
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <div className="password-card">
-
-
-                            <div className="password-card-icon">
-                                🔐
-                            </div>
-
+                        <div className="student-table-header">
 
                             <div>
 
                                 <h3>
-                                    Change Password
+                                    Attendance History
                                 </h3>
 
+                                <p>
+                                    Your recent attendance
+                                    records
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="student-table-wrapper">
+
+                            <table className="student-data-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Date
+                                        </th>
+
+                                        <th>
+                                            Start Time
+                                        </th>
+
+                                        <th>
+                                            End Time
+                                        </th>
+
+                                        <th>
+                                            Status
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    {attendance.length > 0 ? (
+
+                                        attendance.map(
+                                            (item) => (
+
+                                                <tr
+                                                    key={
+                                                        item.id
+                                                    }
+                                                >
+
+                                                    <td>
+                                                        {formatDate(
+                                                            item.attendance_date
+                                                        )}
+                                                    </td>
+
+                                                    <td>
+                                                        {
+                                                            item.start_time ||
+                                                            "-"
+                                                        }
+                                                    </td>
+
+                                                    <td>
+                                                        {
+                                                            item.end_time ||
+                                                            "-"
+                                                        }
+                                                    </td>
+
+                                                    <td>
+
+                                                        <span
+                                                            className={
+                                                                String(
+                                                                    item.status
+                                                                ).toLowerCase() ===
+                                                                "present"
+                                                                    ? "attendance-present"
+                                                                    : "attendance-absent"
+                                                            }
+                                                        >
+
+                                                            {
+                                                                item.status ||
+                                                                "-"
+                                                            }
+
+                                                        </span>
+
+                                                    </td>
+
+                                                </tr>
+
+                                            )
+                                        )
+
+                                    ) : (
+
+                                        <tr>
+
+                                            <td
+                                                colSpan="4"
+                                                className="no-attendance"
+                                            >
+                                                No attendance
+                                                records found.
+                                            </td>
+
+                                        </tr>
+
+                                    )}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                {/* ==================================================
+                    FEES
+                ================================================== */}
+
+                <section
+                    id="fees"
+                    className="student-section"
+                >
+
+                    <div className="student-section-header">
+
+                        <div>
+
+                            <h2>
+                                My Fees
+                            </h2>
+
+                            <p>
+                                View your fee summary and
+                                payment history
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* FEE SUMMARY */}
+
+                    <div className="student-fee-summary-grid">
+
+
+                        <div className="student-fee-card">
+
+                            <span>
+                                Total Fee
+                            </span>
+
+                            <strong>
+                                {formatCurrency(
+                                    totalFee
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="student-fee-card">
+
+                            <span>
+                                Discount
+                            </span>
+
+                            <strong>
+                                {formatCurrency(
+                                    discount
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="student-fee-card">
+
+                            <span>
+                                Net Fee
+                            </span>
+
+                            <strong>
+                                {formatCurrency(
+                                    netFee
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="student-fee-card">
+
+                            <span>
+                                Total Paid
+                            </span>
+
+                            <strong>
+                                {formatCurrency(
+                                    totalPaid
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="student-fee-card">
+
+                            <span>
+                                Pending
+                            </span>
+
+                            <strong>
+                                {formatCurrency(
+                                    pending
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        <div className="student-fee-card">
+
+                            <span>
+                                Status
+                            </span>
+
+                            <strong
+                            className={
+                          feeStatus === "Paid"
+                        ? "fee-paid"
+            :            "fee-pending"
+                        }
+                    >
+                        {feeStatus}
+                        </strong>
+                        </div>
+
+                    </div>
+
+
+                    {/* FEE DETAILS */}
+
+                    <div className="student-table-card">
+
+                        <div className="student-table-header">
+
+                            <div>
+
+                                <h3>
+                                    Payment History
+                                </h3>
 
                                 <p>
-
-                                    Update your login password
-                                    to keep your account secure.
-
+                                    Your fee payment
+                                    records
                                 </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="student-table-wrapper">
+
+                            <table className="student-data-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Date
+                                        </th>
+
+                                        <th>
+                                            Course
+                                        </th>
+
+                                        <th>
+                                            Amount
+                                        </th>
+
+                                        <th>
+                                            Payment Mode
+                                        </th>
+
+                                        <th>
+                                            Transaction No.
+                                        </th>
+
+                                        <th>
+                                            Receipt No.
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    {paymentHistory.length > 0 ? (
+
+                                        paymentHistory.map(
+                                            (payment) => (
+
+                                                <tr
+                                                    key={
+                                                        payment.id
+                                                    }
+                                                >
+
+                                                    <td>
+                                                        {formatDate(
+                                                            payment.payment_date
+                                                        )}
+                                                    </td>
+
+                                                    <td>
+                                                        {
+                                                            payment.course_name ||
+                                                            student?.course ||
+                                                            "-"
+                                                        }
+                                                    </td>
+
+                                                    <td>
+                                                        {formatCurrency(
+                                                            payment.amount_paid
+                                                        )}
+                                                    </td>
+
+                                                    <td>
+                                                        {
+                                                            payment.payment_mode ||
+                                                            "-"
+                                                        }
+                                                    </td>
+
+                                                    <td>
+                                                        {
+                                                            payment.transaction_number ||
+                                                            "-"
+                                                        }
+                                                    </td>
+
+                                                    <td>
+                                                        {
+                                                            payment.receipt_number ||
+                                                            "-"
+                                                        }
+                                                    </td>
+
+                                                </tr>
+
+                                            )
+                                        )
+
+                                    ) : (
+
+                                        <tr>
+
+                                            <td
+                                                colSpan="6"
+                                                className="no-attendance"
+                                            >
+                                                No payment records
+                                                found.
+                                            </td>
+
+                                        </tr>
+
+                                    )}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                {/* ==================================================
+                    CHANGE PASSWORD
+                ================================================== */}
+
+                <section
+                    id="password"
+                    className="student-section"
+                >
+
+                    <div className="student-section-header">
+
+                        <div>
+
+                            <h2>
+                                Change Password
+                            </h2>
+
+                            <p>
+                                Keep your student account
+                                secure
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="student-password-card">
+
+                        <form
+                            onSubmit={
+                                handleChangePassword
+                            }
+                        >
+
+
+                            {passwordMessage && (
+
+                                <div className="student-success-message">
+
+                                    ✓ {passwordMessage}
+
+                                </div>
+
+                            )}
+
+
+                            {passwordError && (
+
+                                <div className="student-error-message">
+
+                                    ⚠️ {passwordError}
+
+                                </div>
+
+                            )}
+
+
+                            <div className="student-password-grid">
+
+
+                                <div className="student-form-group">
+
+                                    <label>
+                                        Current Password
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        name="currentPassword"
+                                        value={
+                                            passwordData.currentPassword
+                                        }
+                                        onChange={
+                                            handlePasswordChange
+                                        }
+                                        placeholder="Enter current password"
+                                    />
+
+                                </div>
+
+
+                                <div className="student-form-group">
+
+                                    <label>
+                                        New Password
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        name="newPassword"
+                                        value={
+                                            passwordData.newPassword
+                                        }
+                                        onChange={
+                                            handlePasswordChange
+                                        }
+                                        placeholder="Enter new password"
+                                    />
+
+                                </div>
+
+
+                                <div className="student-form-group">
+
+                                    <label>
+                                        Confirm New Password
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={
+                                            passwordData.confirmPassword
+                                        }
+                                        onChange={
+                                            handlePasswordChange
+                                        }
+                                        placeholder="Confirm new password"
+                                    />
+
+                                </div>
 
                             </div>
 
 
                             <button
-                                onClick={() =>
-                                    navigate(
-                                        "/change-password"
-                                    )
+                                type="submit"
+                                className="student-change-password-btn"
+                                disabled={
+                                    changingPassword
                                 }
                             >
-                                Change Password
+
+                                {changingPassword
+                                    ? "Changing..."
+                                    : "Change Password"}
+
                             </button>
 
-
-                        </div>
+                        </form>
 
                     </div>
-
 
                 </section>
 
 
-            </main>
+                {/* ==================================================
+                    FOOTER
+                ================================================== */}
 
+                <footer className="student-dashboard-footer">
+
+                    <p>
+                        © {new Date().getFullYear()} Future
+                        Lines. All Rights Reserved.
+                    </p>
+
+                </footer>
+
+
+            </main>
 
         </div>
 
     );
-
 }
 
 export default StudentDashboard;
