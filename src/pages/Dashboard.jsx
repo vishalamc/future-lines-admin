@@ -7,13 +7,36 @@ function Dashboard() {
 
     const navigate = useNavigate();
 
+    // ==================================================
+    // STATES
+    // ==================================================
+
     const [user, setUser] = useState(null);
 
     const [totalStudents, setTotalStudents] = useState(0);
 
-    const [loadingStudents, setLoadingStudents] = useState(true);
+    const [loadingStudents, setLoadingStudents] =
+        useState(true);
 
-    const [loggingOut, setLoggingOut] = useState(false);
+    const [loggingOut, setLoggingOut] =
+        useState(false);
+
+    // ==================================================
+    // FEE STATES
+    // ==================================================
+
+    const [feeSummary, setFeeSummary] = useState({
+        fee_students: 0,
+        total_fee: 0,
+        total_collected: 0,
+        total_pending: 0,
+        paid_students: 0,
+        partial_students: 0,
+        pending_students: 0,
+    });
+
+    const [loadingFees, setLoadingFees] =
+        useState(true);
 
 
     // ==================================================
@@ -25,6 +48,8 @@ function Dashboard() {
         loadUser();
 
         loadStudentCount();
+
+        loadFeeSummary();
 
     }, []);
 
@@ -160,6 +185,120 @@ function Dashboard() {
 
 
     // ==================================================
+    // LOAD FEE SUMMARY
+    // ==================================================
+
+    const loadFeeSummary = async () => {
+
+        try {
+
+            setLoadingFees(true);
+
+
+            const response = await fetch(
+                "/api/fees/dashboard-summary",
+                {
+                    credentials: "include",
+                }
+            );
+
+
+            if (!response.ok) {
+
+                if (
+                    response.status === 401 ||
+                    response.status === 403
+                ) {
+
+                    navigate("/login");
+
+                    return;
+
+                }
+
+
+                throw new Error(
+                    "Failed to load fee summary"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                data.success &&
+                data.summary
+            ) {
+
+                setFeeSummary({
+
+                    fee_students:
+                        Number(
+                            data.summary.fee_students ||
+                            0
+                        ),
+
+                    total_fee:
+                        Number(
+                            data.summary.total_fee ||
+                            0
+                        ),
+
+                    total_collected:
+                        Number(
+                            data.summary.total_collected ||
+                            0
+                        ),
+
+                    total_pending:
+                        Number(
+                            data.summary.total_pending ||
+                            0
+                        ),
+
+                    paid_students:
+                        Number(
+                            data.summary.paid_students ||
+                            0
+                        ),
+
+                    partial_students:
+                        Number(
+                            data.summary.partial_students ||
+                            0
+                        ),
+
+                    pending_students:
+                        Number(
+                            data.summary.pending_students ||
+                            0
+                        ),
+
+                });
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "Fee summary error:",
+                error
+            );
+
+        } finally {
+
+            setLoadingFees(false);
+
+        }
+
+    };
+
+
+    // ==================================================
     // LOGOUT
     // ==================================================
 
@@ -251,9 +390,12 @@ function Dashboard() {
     };
 
 
-    // ==================================================
-    // ATTENDANCE NAVIGATION
-    // ==================================================
+    const goToFeesManagement = () => {
+
+        navigate("/fees");
+
+    };
+
 
     const goToAttendance = () => {
 
@@ -278,6 +420,24 @@ function Dashboard() {
         alert(
             `${name} management will be added next.`
         );
+
+    };
+
+
+    // ==================================================
+    // CURRENCY FORMAT
+    // ==================================================
+
+    const currency = (value) => {
+
+        return `₹${Number(
+            value || 0
+        ).toLocaleString(
+            "en-IN",
+            {
+                maximumFractionDigits: 2,
+            }
+        )}`;
 
     };
 
@@ -332,7 +492,6 @@ function Dashboard() {
 
                 <div className="sidebar-menu">
 
-
                     <p className="menu-title">
                         MAIN MENU
                     </p>
@@ -376,38 +535,11 @@ function Dashboard() {
 
                         </button>
 
-
-                        {/* COURSES */}
-
-                        <button
-                            className="sidebar-link"
-                            onClick={() =>
-                                showComingSoon(
-                                    "Course"
-                                )
-                            }
-                        >
-
-                            <span className="nav-icon">
-                                ▣
-                            </span>
-
-                            <span>
-                                Courses
-                            </span>
-
-                        </button>
-
-
-                        {/* FEES */}
+                        {/* FEES MANAGEMENT */}
 
                         <button
                             className="sidebar-link"
-                            onClick={() =>
-                                showComingSoon(
-                                    "Fee"
-                                )
-                            }
+                            onClick={goToFeesManagement}
                         >
 
                             <span className="nav-icon">
@@ -415,15 +547,13 @@ function Dashboard() {
                             </span>
 
                             <span>
-                                Fees
+                                Fees Management
                             </span>
 
                         </button>
 
 
-                        {/* ==================================================
-                            MARK ATTENDANCE
-                        ================================================== */}
+                        {/* MARK ATTENDANCE */}
 
                         <button
                             className="sidebar-link"
@@ -441,9 +571,7 @@ function Dashboard() {
                         </button>
 
 
-                        {/* ==================================================
-                            ATTENDANCE REPORT
-                        ================================================== */}
+                        {/* ATTENDANCE REPORT */}
 
                         <button
                             className="sidebar-link"
@@ -512,15 +640,12 @@ function Dashboard() {
                 </div>
 
 
-                {/* ==================================================
-                    SIDEBAR BOTTOM
-                ================================================== */}
+                {/* SIDEBAR BOTTOM */}
 
                 <div className="sidebar-bottom">
 
 
                     <div className="sidebar-user">
-
 
                         <div className="sidebar-user-avatar">
 
@@ -547,7 +672,6 @@ function Dashboard() {
                             </span>
 
                         </div>
-
 
                     </div>
 
@@ -594,7 +718,6 @@ function Dashboard() {
 
                     <div className="header-left">
 
-
                         <div className="page-label">
                             ADMINISTRATION
                         </div>
@@ -610,14 +733,11 @@ function Dashboard() {
                             happening at Future Lines today.
                         </p>
 
-
                     </div>
 
 
                     <div className="header-right">
 
-
-                        {/* TOP LOGOUT */}
 
                         <button
                             className="header-logout"
@@ -636,10 +756,7 @@ function Dashboard() {
                         </button>
 
 
-                        {/* PROFILE */}
-
                         <div className="admin-profile">
-
 
                             <div className="profile-avatar">
 
@@ -649,7 +766,6 @@ function Dashboard() {
 
 
                             <div className="profile-info">
-
 
                                 <strong>
                                     {
@@ -663,15 +779,12 @@ function Dashboard() {
                                     Administrator
                                 </span>
 
-
                             </div>
-
 
                         </div>
 
 
                     </div>
-
 
                 </header>
 
@@ -690,7 +803,6 @@ function Dashboard() {
 
                         <div className="banner-content">
 
-
                             <span className="banner-badge">
                                 ✦ ADMIN PANEL
                             </span>
@@ -706,7 +818,6 @@ function Dashboard() {
                                 fees, attendance and
                                 certificates from one place.
                             </p>
-
 
                         </div>
 
@@ -725,7 +836,6 @@ function Dashboard() {
 
                     <div className="section-heading">
 
-
                         <div>
 
                             <h2>
@@ -738,7 +848,6 @@ function Dashboard() {
                             </p>
 
                         </div>
-
 
                     </div>
 
@@ -753,9 +862,7 @@ function Dashboard() {
                             onClick={goToStudents}
                         >
 
-
                             <div className="stat-top">
-
 
                                 <div className="stat-icon students-icon">
                                     ♙
@@ -766,12 +873,10 @@ function Dashboard() {
                                     →
                                 </span>
 
-
                             </div>
 
 
                             <div className="stat-info">
-
 
                                 <span>
                                     Total Students
@@ -791,65 +896,22 @@ function Dashboard() {
                                     Registered students
                                 </small>
 
-
                             </div>
-
 
                         </div>
 
 
-                        {/* COURSES */}
-
-                        <div className="stat-card">
+                      
 
 
-                            <div className="stat-top">
+                        {/* TOTAL FEE */}
 
-
-                                <div className="stat-icon courses-icon">
-                                    ▣
-                                </div>
-
-
-                                <span className="stat-arrow">
-                                    →
-                                </span>
-
-
-                            </div>
-
-
-                            <div className="stat-info">
-
-
-                                <span>
-                                    Total Courses
-                                </span>
-
-
-                                <h2>
-                                    0
-                                </h2>
-
-
-                                <small>
-                                    Active courses
-                                </small>
-
-
-                            </div>
-
-
-                        </div>
-
-
-                        {/* FEES */}
-
-                        <div className="stat-card">
-
+                        <div
+                            className="stat-card clickable-card"
+                            onClick={goToFeesManagement}
+                        >
 
                             <div className="stat-top">
-
 
                                 <div className="stat-icon fees-icon">
                                     ₹
@@ -860,12 +922,10 @@ function Dashboard() {
                                     →
                                 </span>
 
-
                             </div>
 
 
                             <div className="stat-info">
-
 
                                 <span>
                                     Total Fees
@@ -873,31 +933,36 @@ function Dashboard() {
 
 
                                 <h2>
-                                    ₹0
+
+                                    {loadingFees
+                                        ? "..."
+                                        : currency(
+                                            feeSummary.total_fee
+                                        )}
+
                                 </h2>
 
 
                                 <small>
-                                    Fee collection
+                                    Total net fee
                                 </small>
 
-
                             </div>
-
 
                         </div>
 
 
-                        {/* CERTIFICATES */}
+                        {/* TOTAL COLLECTED */}
 
-                        <div className="stat-card">
-
+                        <div
+                            className="stat-card clickable-card"
+                            onClick={goToFeesManagement}
+                        >
 
                             <div className="stat-top">
 
-
-                                <div className="stat-icon certificate-icon">
-                                    ▤
+                                <div className="stat-icon fees-icon">
+                                    ✓
                                 </div>
 
 
@@ -905,30 +970,204 @@ function Dashboard() {
                                     →
                                 </span>
 
+                            </div>
+
+
+                            <div className="stat-info">
+
+                                <span>
+                                    Total Collected
+                                </span>
+
+
+                                <h2>
+
+                                    {loadingFees
+                                        ? "..."
+                                        : currency(
+                                            feeSummary.total_collected
+                                        )}
+
+                                </h2>
+
+
+                                <small>
+                                    Payments received
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* TOTAL PENDING */}
+
+                        <div
+                            className="stat-card clickable-card"
+                            onClick={goToFeesManagement}
+                        >
+
+                            <div className="stat-top">
+
+                                <div className="stat-icon fees-icon">
+                                    !
+                                </div>
+
+
+                                <span className="stat-arrow">
+                                    →
+                                </span>
 
                             </div>
 
 
                             <div className="stat-info">
 
-
                                 <span>
-                                    Certificates
+                                    Pending Fees
                                 </span>
 
 
                                 <h2>
-                                    0
+
+                                    {loadingFees
+                                        ? "..."
+                                        : currency(
+                                            feeSummary.total_pending
+                                        )}
+
                                 </h2>
 
 
                                 <small>
-                                    Certificates issued
+                                    Outstanding amount
                                 </small>
-
 
                             </div>
 
+                        </div>
+
+
+                    </div>
+
+
+                    {/* ==================================================
+                        FEE STATUS SUMMARY
+                    ================================================== */}
+
+                    <div className="section-heading">
+
+                        <div>
+
+                            <h2>
+                                Fee Status
+                            </h2>
+
+
+                            <p>
+                                Student payment status
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="stat-grid">
+
+
+                        {/* PAID */}
+
+                        <div
+                            className="stat-card"
+                            onClick={goToFeesManagement}
+                        >
+
+                            <div className="stat-info">
+
+                                <span>
+                                    Paid Students
+                                </span>
+
+
+                                <h2>
+
+                                    {loadingFees
+                                        ? "..."
+                                        : feeSummary.paid_students}
+
+                                </h2>
+
+
+                                <small>
+                                    Fully paid
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* PARTIAL */}
+
+                        <div
+                            className="stat-card"
+                            onClick={goToFeesManagement}
+                        >
+
+                            <div className="stat-info">
+
+                                <span>
+                                    Partial Payment
+                                </span>
+
+
+                                <h2>
+
+                                    {loadingFees
+                                        ? "..."
+                                        : feeSummary.partial_students}
+
+                                </h2>
+
+
+                                <small>
+                                    Payment remaining
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* PENDING */}
+
+                        <div
+                            className="stat-card"
+                            onClick={goToFeesManagement}
+                        >
+
+                            <div className="stat-info">
+
+                                <span>
+                                    Pending Students
+                                </span>
+
+
+                                <h2>
+
+                                    {loadingFees
+                                        ? "..."
+                                        : feeSummary.pending_students}
+
+                                </h2>
+
+
+                                <small>
+                                    No payment recorded
+                                </small>
+
+                            </div>
 
                         </div>
 
@@ -945,7 +1184,6 @@ function Dashboard() {
 
                         <div className="section-heading">
 
-
                             <div>
 
                                 <h2>
@@ -959,7 +1197,6 @@ function Dashboard() {
                                 </p>
 
                             </div>
-
 
                         </div>
 
@@ -976,14 +1213,12 @@ function Dashboard() {
                                 }
                             >
 
-
                                 <div className="action-icon student-action">
                                     +
                                 </div>
 
 
                                 <div className="action-content">
-
 
                                     <strong>
                                         Add Student
@@ -994,14 +1229,12 @@ function Dashboard() {
                                         Register a new student
                                     </span>
 
-
                                 </div>
 
 
                                 <div className="action-arrow">
                                     →
                                 </div>
-
 
                             </button>
 
@@ -1015,14 +1248,12 @@ function Dashboard() {
                                 }
                             >
 
-
                                 <div className="action-icon list-action">
                                     ☷
                                 </div>
 
 
                                 <div className="action-content">
-
 
                                     <strong>
                                         Student List
@@ -1033,14 +1264,12 @@ function Dashboard() {
                                         View all registered students
                                     </span>
 
-
                                 </div>
 
 
                                 <div className="action-arrow">
                                     →
                                 </div>
-
 
                             </button>
 
@@ -1056,14 +1285,12 @@ function Dashboard() {
                                 }
                             >
 
-
                                 <div className="action-icon course-action">
                                     ▣
                                 </div>
 
 
                                 <div className="action-content">
-
 
                                     <strong>
                                         Manage Courses
@@ -1074,7 +1301,6 @@ function Dashboard() {
                                         Add and manage courses
                                     </span>
 
-
                                 </div>
 
 
@@ -1082,21 +1308,17 @@ function Dashboard() {
                                     →
                                 </div>
 
-
                             </button>
 
 
-                            {/* FEES */}
+                            {/* FEES MANAGEMENT */}
 
                             <button
                                 className="action-card"
-                                onClick={() =>
-                                    showComingSoon(
-                                        "Fee"
-                                    )
+                                onClick={
+                                    goToFeesManagement
                                 }
                             >
-
 
                                 <div className="action-icon fee-action">
                                     ₹
@@ -1104,7 +1326,6 @@ function Dashboard() {
 
 
                                 <div className="action-content">
-
 
                                     <strong>
                                         Fee Management
@@ -1115,7 +1336,6 @@ function Dashboard() {
                                         Manage student payments
                                     </span>
 
-
                                 </div>
 
 
@@ -1123,13 +1343,10 @@ function Dashboard() {
                                     →
                                 </div>
 
-
                             </button>
 
 
-                            {/* ==================================================
-                                MARK ATTENDANCE
-                            ================================================== */}
+                            {/* MARK ATTENDANCE */}
 
                             <button
                                 className="action-card"
@@ -1138,14 +1355,12 @@ function Dashboard() {
                                 }
                             >
 
-
                                 <div className="action-icon attendance-action">
                                     ✓
                                 </div>
 
 
                                 <div className="action-content">
-
 
                                     <strong>
                                         Mark Attendance
@@ -1156,7 +1371,6 @@ function Dashboard() {
                                         Mark daily student attendance
                                     </span>
 
-
                                 </div>
 
 
@@ -1164,13 +1378,10 @@ function Dashboard() {
                                     →
                                 </div>
 
-
                             </button>
 
 
-                            {/* ==================================================
-                                ATTENDANCE REPORT
-                            ================================================== */}
+                            {/* ATTENDANCE REPORT */}
 
                             <button
                                 className="action-card"
@@ -1179,14 +1390,12 @@ function Dashboard() {
                                 }
                             >
 
-
                                 <div className="action-icon attendance-report-action">
                                     ▥
                                 </div>
 
 
                                 <div className="action-content">
-
 
                                     <strong>
                                         Attendance Report
@@ -1197,7 +1406,6 @@ function Dashboard() {
                                         View student attendance reports
                                     </span>
 
-
                                 </div>
 
 
@@ -1205,12 +1413,10 @@ function Dashboard() {
                                     →
                                 </div>
 
-
                             </button>
 
 
                         </div>
-
 
                     </div>
 
@@ -1226,9 +1432,7 @@ function Dashboard() {
 
                         <div className="system-card">
 
-
                             <div className="system-card-header">
-
 
                                 <div className="system-icon">
                                     ✓
@@ -1248,12 +1452,10 @@ function Dashboard() {
 
                                 </div>
 
-
                             </div>
 
 
                             <div className="system-status">
-
 
                                 <span className="status-dot"></span>
 
@@ -1262,9 +1464,7 @@ function Dashboard() {
                                     All Systems Operational
                                 </strong>
 
-
                             </div>
-
 
                         </div>
 
@@ -1273,9 +1473,7 @@ function Dashboard() {
 
                         <div className="help-card">
 
-
                             <div>
-
 
                                 <span className="help-label">
                                     NEED HELP?
@@ -1292,14 +1490,12 @@ function Dashboard() {
                                     through the management system.
                                 </p>
 
-
                             </div>
 
 
                             <div className="help-logo">
                                 FL
                             </div>
-
 
                         </div>
 
